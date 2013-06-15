@@ -5,15 +5,11 @@ pta-roq
 This is my summer project on Pulsar Timming Array data fitting using Reduced Order
 Quadrature methods
 
-===
-TODO
-===
-
 These are the list of things that need to be done:
 
 1. Write a simple model generating data for single sources
 
-   a) evenly spaced sampling 1 pulsar
+   a) evenly spaced time sampling 1 pulsar
 
    b) not evenly spaced 1 pulsar
 
