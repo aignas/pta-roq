@@ -1,6 +1,22 @@
 #! /usr/bin/python2.7
 
+from __future__ import division
 import numpy as np
+# "cimport" is used to import special compile-time information
+# about the numpy module (this is stored in a file numpy.pxd which is
+# currently part of the Cython distribution).
+cimport numpy as np
+# We now need to fix a datatype for our arrays. I've used the variable
+# DTYPE for this, which is assigned to the usual NumPy runtime
+# type info object.
+DTYPE = np.int
+# "ctypedef" assigns a corresponding compile-time type to DTYPE_t. For
+# every type in the numpy module there's a corresponding compile-time
+# type with a _t-suffix.
+ctypedef np.int_t DTYPE_t
+# "def" can type its arguments but not have a return type. The type of the
+# arguments for a "def" function is checked at run-time when entering the
+# function.
 from libc.math cimport sin, cos
 
 # The following will code up the equations (16) to (19) from the Ellis et al. (see
@@ -9,7 +25,7 @@ from libc.math cimport sin, cos
 # This is a class for unit vectors. I have a feeling, that the p vector might be not
 # necessary here
 class UnitVectors:
-    def __init__ (self, theta, phi):
+    def __init__ (self, double theta, double phi):
         # Shorthands for sines and cosines
         self.theta = theta
         self.phi = phi
@@ -38,7 +54,7 @@ class UnitVectors:
 # This will be a Pulsar Array data structure and we access the data in it the lazy
 # way.
 class PulsarGrid:
-    def __init__ (self, N, ranges):
+    def __init__ (self, int N, ranges):
         # These wil be polar coordinates of the pulsars
         self.__R = np.random.rand(N,3)
 
@@ -51,7 +67,7 @@ class PulsarGrid:
     def getAngles (self):
         return self.__R[:,1:3]
 
-    def getUnitVector (self, idx):
+    def getUnitVector (self, int idx):
         p = np.zeros(3)
         p[0] =  sin (self.__R[idx,1])
         p[1] =  p[0]
@@ -60,14 +76,17 @@ class PulsarGrid:
         p[1] *= sin (self.__R[idx,2])
         return p
 
-    def getLength (self, idx):
+    def getLength (self, int idx):
         return self.__R[idx,0]
 
 # define antenna pattern functions as in (9) and (10)
 # The F[0] term is Fplus and F[1] is Fcross
-def antennaPattern (theta, phi, u_p):
+def antennaPattern (double theta, double phi, np.ndarray u_p):
     # Initialise unit vector according to the given parameters
     v = UnitVectors(theta, phi)
+
+    cdef double d1, d2, d3
+    cdef np.ndarray F
 
     d1 = np.dot(v.m(),u_p)
     d2 = np.dot(v.n(),u_p)
@@ -82,30 +101,37 @@ def antennaPattern (theta, phi, u_p):
 # Define some required functions.
 # FIXME we can probably do some approximations here and there (See the Ellis et al.
 # paper p3).
-def omega(t, omega0, M):
-    return (omega0**(-8./3) - 256./5 * M**(5./3) * t)**(-3./8)
+def omega(double t, double omega0, double M):
+    return (omega0**(-8/3) - 256/5 * M**(5/3) * t)**(-3/8)
 
-def Phi (t, omega0, M):
+def Phi (double t, double omega0, double M):
     # FIXME the Cornell et al. paper has a constant term here. I believe, that the
     #       constant term here should be as well, but I am wondering if the constant
     #       term is the same as \Phi_0
-    return 1./(32 * M**(5./3)) * ( omega0**(-5./3) - omega(t, omega0, M)**(-5./3))
+    return 1/(32 * M**(5/3)) * ( omega0**(-5/3) - omega(t, omega0, M)**(-5/3))
 
 # define the GW contributions to the timing residuals as in (12) and (13)
 # The first term is the plus, the second term is the cross as in the F function
-def gWContribution (omega0, M, t, iota, psi, zeta, Phi0):
+def gWContribution (double omega0, double M, double t, double iota, double psi, 
+        double zeta, double Phi0):
+
+    cdef double a, b
+    cdef np.ndarray gw
+
     a = sin( 2 * (Phi(t, omega0, M) - Phi0) ) * (1 + cos(iota)**2)
     b = cos( 2 * (Phi(t, omega0, M) - Phi0) ) * cos(iota)
     gw = np.zeros(2)
 
-    gw[0] = zeta / omega(t, omega0, M)**(1./3) * ( - a * cos(2*psi) - 2 * sin(2*psi) )
-    gw[1] = zeta / omega(t, omega0, M)**(1./3) * ( - a * sin(2*psi) - 2 * cos(2*psi) )
+    gw[0] = zeta / omega(t, omega0, M)**(1/3) * ( - a * cos(2*psi) - 2 * sin(2*psi) )
+    gw[1] = zeta / omega(t, omega0, M)**(1/3) * ( - a * sin(2*psi) - 2 * cos(2*psi) )
 
     return gw
 
 
 # define the coefficients amplitudes as shown in the (18)
-def amplitude(zeta, iota, phi, psi):
+def amplitude(double zeta, double iota, double phi, double psi):
+    cdef np.ndarray a
+    
     a = np.zeros(4)
     a[0] = zeta * ( (1 + cos(iota)**2) * cos (phi) * cos (2*psi) \
                 + 2 * cos(iota) * sin (phi) * sin (2*psi) )
@@ -123,35 +149,45 @@ def amplitude(zeta, iota, phi, psi):
 
 
 # Define the time dependent basis functions as shown in the equation (19)
-def basis (omega0, M, theta, phi, t, u_p):
+def basis (double omega0, double M, double theta, double phi, double t, u_p):
+    cdef np.ndarray A, F
+
     A = np.zeros(4)
     F = antennaPattern(theta, phi, u_p)
-    A[0] = F[0] * omega(t, omega0, M)**(-1./3) * sin (2 * Phi(t, omega0, M))
-    A[1] = F[0] * omega(t, omega0, M)**(-1./3) * cos (2 * Phi(t, omega0, M))
-    A[2] = F[1] * omega(t, omega0, M)**(-1./3) * sin (2 * Phi(t, omega0, M))
-    A[3] = F[1] * omega(t, omega0, M)**(-1./3) * cos (2 * Phi(t, omega0, M))
+    A[0] = F[0] * omega(t, omega0, M)**(-1/3) * sin (2 * Phi(t, omega0, M))
+    A[1] = F[0] * omega(t, omega0, M)**(-1/3) * cos (2 * Phi(t, omega0, M))
+    A[2] = F[1] * omega(t, omega0, M)**(-1/3) * sin (2 * Phi(t, omega0, M))
+    A[3] = F[1] * omega(t, omega0, M)**(-1/3) * cos (2 * Phi(t, omega0, M))
 
     return A
 
 # Define the pulsar term as in the eq (17)
-def pulsar (t, M, D, iota, Phi0, psi, theta, phi, omega0, L, u_p):
+def pulsar (double t, double M, double D, double iota, double Phi0, double psi, 
+        double theta, double phi, double omega0, double L, u_p):
+    cdef np.ndarray F, s
+    cdef double tp, zeta
+
     v = UnitVectors(theta, phi)
     tp = t - L * (1 + np.dot(v.Omega(), u_p))
-    zeta = M**(5./3)/D
+    zeta = M**(5/3)/D
 
     F = antennaPattern(theta, phi, u_p)
     s = gWContribution (omega0, M, tp, iota, psi, zeta, Phi0)
     return np.dot(F,s)
 
 # Define the noise term
-def noise (t):
+def noise (double t):
     #define some Gaussian noise in the amplitude.
-    var = 0.00003
+    cdef double var = 0.00003
     return np.exp ( - np.random.rand()**2 / (2*var))
 
 # Define the residual as a function of parameters
-def residual (t, M, D, iota, Phi0, psi, theta, phi, omega0, L, u_p):
-    zeta = M**(5./3)/D
+def residual (double t, double M, double D, double iota, double Phi0, double psi, 
+        double theta, double phi, double omega0, double L, u_p):
+    cdef double zeta, p, n
+    cdef np.ndarray a, A
+
+    zeta = M**(5/3)/D
     a = amplitude(zeta, iota, phi, psi)
     A = basis (omega0, M, theta, phi, t, u_p)
     p = pulsar (t, M, D, iota, Phi0, psi, theta, phi, omega0, L, u_p)
