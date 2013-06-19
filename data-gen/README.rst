@@ -8,6 +8,11 @@ Cython in order to run the code. Also, reffer to the paper by Corbin and Cornish
 et al. [Jaranowski2008a]_ paper for explanation of intrinsic and extrinsic parameter
 classification.
 
+There is also a speed-up version of the [Ellis2010a]_ formalism presented by
+[vanHaasteren2012a]_. Also, there is a paper by [Petiteau2012a]_, which presents a way
+how to validate data processing methods by means of injection of new sources and then
+trying to recover them.
+
 The original paper is slightly unclear about some of the parameters
 The parameter names:
 
@@ -31,3 +36,5 @@ The parameter names:
  .. [Ellis2010a] http://arxiv.org/abs/1204.4218
  .. [Corbin2008a] http://arxiv.org/abs/1008.1782
  .. [Jaranowski2008a] http://arxiv.org/abs/gr-qc/9804014
+ .. [vanHaasteren2012a] http://arxiv.org/abs/1210.0584v2
+ .. [Petiteau2012a] http://arxiv.org/abs/1210.2396
