@@ -1,6 +1,6 @@
 #! /usr/bin/python2.7
 
-from __future__ import division
+from __future__ import print_function, division
 import numpy as np
 # "cimport" is used to import special compile-time information
 # about the numpy module (this is stored in a file numpy.pxd which is
@@ -153,7 +153,7 @@ def amplitude(double zeta, double iota, double phi, double psi):
 
 
 # Define the time dependent basis functions as shown in the equation (19)
-def basis (double omega0, double M, double theta, double phi, double t, u_p):
+def basis (double omega0, double M, double theta, double phi, double t, np.ndarray u_p):
     cdef np.ndarray A, F
 
     A = np.zeros(4)
@@ -167,7 +167,7 @@ def basis (double omega0, double M, double theta, double phi, double t, u_p):
 
 # Define the pulsar term as in the eq (17)
 def pulsar (double t, double M, double D, double iota, double Phi0, double psi, 
-        double theta, double phi, double omega0, double L, u_p):
+        double theta, double phi, double omega0, double L, np.ndarray u_p):
     cdef np.ndarray F, s
     cdef double tp, zeta
 
