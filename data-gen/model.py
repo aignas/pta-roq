@@ -19,52 +19,22 @@ t_interval_max = 1.3*7*24*3600  # 1.3 week gap is maximum
 # Max number of timings
 N_t_max = 1
 N_t_min = 1
+#
 
 # Time schedule of the pulsar timing:
-schedule = np.random.rand(N) * t_interval_min
+schedule = np.random.rand(N) * 0
 
-# Define our pulsar grid
-pulsars = sm.PulsarGrid (N, PulsarCoordinateRanges)
-a = []
-for i in range(N):
-  a += [ np.array([]) ]
-
-# Define the constants for use in the data generation
-t = 5
-M = 5
-D = 10e9*M
-iota = 2
-Phi0 = 1
-psi = 2
-theta = 0.5
-phi = 0.2
-omega0 = 1e-8
-CONTINUE = True
+# Define our pulsar grid and the sources
+pulsars = sm.PulsarGrid (N, PulsarCoordinateRanges, pulsarNoise)
+sources = np.array([ sm.Source( M=5, D=10e9*5, iota=2, Phi0=1, psi=2,
+                                theta=0.5, phi=0.2, omega0=1e-8)
+                    ])
 
 # Generate the actual data.
-while CONTINUE:
-  CONTINUE = False
-
-  for j in range(N):
-    t = schedule[j]
-
-    if t < t_final:
-      L = pulsars.getLength(j)
-      u_p = pulsars.getUnitVector(j)
-      a[j] = np.append(a[j], sm.residual (t, M, D, iota, Phi0, psi, theta, phi, omega0, L, u_p))
-      schedule[j] += np.random.rand()*abs(t_interval_max - t_interval_min) + \
-                     t_interval_min
-    t = schedule[j]
-    # Do not stop generating data if there is at least one pulsar, which had not "gone"
-    # in to the future
-    if t < t_final:
-      CONTINUE = True
-
-# Contract the data into a one vector
-data = np.array([])
-for i in a:
-  data = np.append(data, i)
+data, dates = sm.dataGeneration(schedule, sources, pulsars, t_final, 
+                          t_interval_min, t_interval_max)
 
 # Save the data in a gz format. Numpy load txt understands gzipped files
 # transparently
-np.savetxt("pulsardata.txt.gz", data)
+np.savetxt("../data-crunch/pulsardata.txt.gz", data)
+np.savetxt("../data-crunch/pulsarschedule.txt.gz", dates)

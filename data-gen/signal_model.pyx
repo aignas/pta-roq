@@ -17,7 +17,7 @@ ctypedef np.int_t DTYPE_t
 # "def" can type its arguments but not have a return type. The type of the
 # arguments for a "def" function is checked at run-time when entering the
 # function.
-from libc.math cimport sin, cos
+from libc.math cimport sin, cos, sqrt
 
 # The following will code up the equations (16) to (19) from the Ellis et al. (see
 # README)
@@ -54,15 +54,19 @@ class UnitVectors:
 # This will be a Pulsar Array data structure and we access the data in it the lazy
 # way.
 class PulsarGrid:
-    def __init__ (self, int N, ranges):
+    def __init__ (self, int N, ranges, noise):
         # These wil be polar coordinates of the pulsars
         self.__R = np.random.rand(N,3)
+        self.__Noise = np.random.rand(N)*noise
 
         # Transform the random number distributions to span the ranges defined by the
         # user
         # FIXME Is there a nicer way to write it?
         for i in range(3):
             self.__R[:,i] = self.__R[:,i] * abs(ranges[i,0] - ranges[i,1]) + ranges[i].min()
+
+    def getNoise (self, int idx):
+        return self.__Noise[idx]
 
     def getAngles (self):
         return self.__R[:,1:3]
