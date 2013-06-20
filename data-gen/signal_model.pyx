@@ -180,10 +180,9 @@ def pulsar (double t, double M, double D, double iota, double Phi0, double psi,
     return np.dot(F,s)
 
 # Define the noise term
-def noise (double t):
-    #define some Gaussian noise in the amplitude.
-    cdef double var = 0.00003
-    return np.exp ( - np.random.rand()**2 / (2*var))
+def noise (double t, double var):
+    # Add some gaussian noise which deppends on each pulsar
+    return np.random.randn() * sqrt(var)
 
 # Define the residual as a function of parameters
 def residual (double t, double M, double D, double iota, double Phi0, double psi, 
