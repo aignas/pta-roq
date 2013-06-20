@@ -10,7 +10,8 @@ import numpy as np
 # scattered accross some length
 N = 8
 PulsarCoordinateRanges = np.array([ [10,40],[0.2,1.],[-0.5,0.5]])
-t = 0.
+pulsarNoise = 0.003
+
 # Stop the generation here
 t_final = 20*365.25*24*3600
 # Interval when we do not take any measurements
@@ -31,7 +32,7 @@ sources = np.array([ sm.Source( M=5, D=10e9*5, iota=2, Phi0=1, psi=2,
                     ])
 
 # Generate the actual data.
-data, dates = sm.dataGeneration(schedule, sources, pulsars, t_final, 
+data, dates = sm.dataGeneration(schedule, sources, pulsars, t_final,
                           t_interval_min, t_interval_max)
 
 # Save the data in a gz format. Numpy load txt understands gzipped files

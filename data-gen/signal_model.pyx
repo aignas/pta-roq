@@ -83,6 +83,25 @@ class PulsarGrid:
     def getLength (self, int idx):
         return self.__R[idx,0]
 
+    def getNumber (self):
+        return self.__R.shape[0]
+
+class Source:
+    #cdef double self.M, self.D, self.iota, self.Phi0, self.psi, # Extrinsic params
+    #            self.theta, self.phi, self.omega0               # Intrinsic params
+
+    def __init__ (self, double M=5, double iota=0, double Phi0=0, double psi=0,
+            double theta=0, double phi=0, double omega0=1e-8, **kwargs):
+        # Read the arguments and if they are not given, just randomize
+        self.M = M
+        self.D = kwargs.get('D', 10e9 * self.M)
+        self.iota = iota
+        self.Phi0 = Phi0
+        self.psi = psi
+        self.theta = theta
+        self.phi = phi
+        self.omega0 = omega0
+
 # define antenna pattern functions as in (9) and (10)
 # The F[0] term is Fplus and F[1] is Fcross
 def antennaPattern (double theta, double phi, np.ndarray u_p):
@@ -99,7 +118,7 @@ def antennaPattern (double theta, double phi, np.ndarray u_p):
     F = np.zeros(2)
     F[0] = 0.5 * ( d1 + d2 ) * ( d1 - d2 ) / ( 1 + d3 )
     F[1] = ( d1 * d2 ) / ( 1 + d3 )
-    
+
     return F
 
 # Define some required functions.
@@ -116,7 +135,7 @@ def Phi (double t, double omega0, double M):
 
 # define the GW contributions to the timing residuals as in (12) and (13)
 # The first term is the plus, the second term is the cross as in the F function
-def gWContribution (double omega0, double M, double t, double iota, double psi, 
+def gWContribution (double omega0, double M, double t, double iota, double psi,
         double zeta, double Phi0):
 
     cdef double a, b
@@ -135,7 +154,7 @@ def gWContribution (double omega0, double M, double t, double iota, double psi,
 # define the coefficients amplitudes as shown in the (18)
 def amplitude(double zeta, double iota, double phi, double psi):
     cdef np.ndarray a
-    
+
     a = np.zeros(4)
     a[0] = zeta * ( (1 + cos(iota)**2) * cos (phi) * cos (2*psi) \
                 + 2 * cos(iota) * sin (phi) * sin (2*psi) )
@@ -166,7 +185,7 @@ def basis (double omega0, double M, double theta, double phi, double t, np.ndarr
     return A
 
 # Define the pulsar term as in the eq (17)
-def pulsar (double t, double M, double D, double iota, double Phi0, double psi, 
+def pulsar (double t, double M, double D, double iota, double Phi0, double psi,
         double theta, double phi, double omega0, double L, np.ndarray u_p):
     cdef np.ndarray F, s
     cdef double tp, zeta
@@ -185,14 +204,79 @@ def noise (double t, double var):
     return np.random.randn() * sqrt(var)
 
 # Define the residual as a function of parameters
-def residual (double t, double M, double D, double iota, double Phi0, double psi, 
-        double theta, double phi, double omega0, double L, u_p):
-    cdef double zeta, p, n
+def individualSource (double t, double M, double D, double iota, double Phi0,
+        double psi, double theta, double phi, double omega0, double L,
+        np.ndarray u_p, double var):
+    cdef double zeta, p
     cdef np.ndarray a, A
 
     zeta = M**(5/3)/D
     a = amplitude(zeta, iota, phi, psi)
     A = basis (omega0, M, theta, phi, t, u_p)
     p = pulsar (t, M, D, iota, Phi0, psi, theta, phi, omega0, L, u_p)
-    n = noise (t)
-    return np.dot(a,A) + p + n
+    return np.dot(a,A) + p
+
+# Define the residual as a function of parameters
+def residual (double t, np.ndarray sources, double L, np.ndarray u_p, double var):
+    cdef double n, A
+    cdef int N = sources.shape[0]
+
+    n = noise (t, var)
+    A = 0
+
+    for i in range(N):
+        A += individualSource(t, sources[i].M, sources[i].D, sources[i].iota,
+                sources[i].Phi0, sources[i].psi, sources[i].theta, sources[i].phi,
+                sources[i].omega0, L, u_p, var)
+    return A + n
+
+# Generate the actual data.
+def dataGeneration (np.ndarray schedule, np.ndarray sources, pulsars, double t_final,
+                    double t_interval_min, double t_interval_max):
+    cdef double t, L, noise
+    cdef np.ndarray u_p
+    cdef np.ndarray a_out = np.array([]) , dates_out = np.array([])
+    cdef int N = pulsars.getNumber()
+    collectData = True
+
+    a = []
+    dates = []
+    for i in range(N):
+        a += [ np.array([]) ]
+        dates += [ np.array([]) ]
+
+    # Copy the structure of the array for the time log
+
+    # Start collecting the data
+    while collectData:
+        collectData = False
+
+        for i in range(N):
+            t = schedule[i]
+
+            if t > t_final:
+                continue
+            else:
+                # The data is being collected, add to the log
+                dates[i] = np.append(dates[i], t)
+                # Do not stop generating data if there is at least one pulsar, which had
+                # not "gone" in to the future
+                collectData = True
+
+            # Set some temporary values
+            L = pulsars.getLength(i)
+            u_p = pulsars.getUnitVector(i)
+            noise = pulsars.getNoise(i)
+            a[i] = np.append(a[i], residual(t, sources, L, u_p, noise))
+
+            # Update a schedule for this pulsar. We just generate a random number
+            schedule[i] += np.random.rand()*abs(t_interval_max - t_interval_min) + \
+                  t_interval_min
+
+    # FIXME Spit out the data in a format we need
+    # Contract the data into a one vector
+    for i in range(N):
+        a_out = np.append(a_out, a[i])
+        dates_out = np.append(dates_out, dates[i])
+
+    return a_out, dates_out
