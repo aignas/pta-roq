@@ -17,7 +17,7 @@ The original paper is slightly unclear about some of the parameters
 The parameter names:
 
 * :math:`\zeta := M^{5/3}/D`
-* :math:`\cos(\iota)` - orbital inclination (? is it the cosine, or the angle itself?)
+* :math:`\iota` - orbital inclination
 * :math:`\psi` - polarisation angle of the GW
 * :math:`t` - time
 * :math:`\theta, \phi` - spherical polar angles for a vector pointing from Solar System
