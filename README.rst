@@ -1,10 +1,12 @@
-Pulsar Timing Array - Reduced Order Methods
-===========================================
+=============================================
+ Pulsar Timing Array - Reduced Order Methods
+=============================================
 
 This is my summer project on Pulsar Timming Array data fitting using Reduced Order
 Quadrature methods
 
-The structure of the project (Note, that the meaning are bellow):
+The structure of the project:
+-----------------------------
 
 1. This is a simple data generator using the Ellis et al. paper [Ellis2010a]_. You need
    Cython in order to run the code. Also, reffer to the paper by Corbin and Cornish
@@ -46,11 +48,12 @@ The structure of the project (Note, that the meaning are bellow):
 
 7. Check the model for multiple sources
 
-Meanings of some symbols oftenly used in the cited papers and in this project.
-------------------------------------------------------------------------------
+Meanings of symbols
+-------------------
 
-The original paper is slightly unclear about some of the parameters
-The parameter names:
+Meanings of some symbols oftenly used in the cited papers and in this project.
+The original paper (by [Ellis2010a]_) was slightly unclear about some of the parameters,
+hence the names are enumerated bellow:
 
 * :math:`\zeta := M^{5/3}/D`
 * :math:`\iota` - orbital inclination
