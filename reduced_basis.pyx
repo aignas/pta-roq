@@ -42,7 +42,8 @@ def ROMGreedy (np.ndarray lambda, h, double epsilon):
 
     # Initialise some variables
     cdef int i = 0
-    cdef np.ndarray sigma, RB
+    cdef np.ndarray sigma, RB, tmp_l
+    tmp_l.resize(lambda.shape[0])
     
     # Initialise the parameter space
     paramSpace = []
@@ -58,3 +59,15 @@ def ROMGreedy (np.ndarray lambda, h, double epsilon):
     sigma.resize(1)
     sigma[0] = 1
 
+    # The parameter space is large, so the computation will be expensive
+    while sigma[i] > epsilon:
+        i += 1
+        sigma[i] = 0
+
+        # Find the 
+        # find the max of sigma = || h - p(i-1)h||^2
+        # Save the lambda value when sigma is max
+
+        # RB = np.append(RB, lambda_i)
+
+    return RB
