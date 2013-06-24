@@ -71,7 +71,7 @@ The parameter names:
 * :math:`\omega(t)` - orbital frequency
 * :math:`\Phi(t), \Phi_0` - orbital phase
 * :math:`s` - signal from the pulsar timing data
-* :math:`h \left(\vec{lambda}\right)` - the signal template depending on the parameters
+* :math:`h \left(\vec{\lambda}\right)` - the signal template depending on the parameters
   :math:`\vec{\lambda}`
 * :math:`C` - The covariance matrix, which is used to calculate the multivariate noise
   gaussian.
