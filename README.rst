@@ -1,11 +1,11 @@
-=======
+===
 Pulsar Timing Array - Reduced Order Methods
-=======
+===
 
 This is my summer project on Pulsar Timming Array data fitting using Reduced Order
 Quadrature methods
 
-The structure of the project:
+The structure of the project (Note, that the meaning are bellow):
 
 1. This is a simple data generator using the Ellis et al. paper [Ellis2010a]_. You need
    Cython in order to run the code. Also, reffer to the paper by Corbin and Cornish
@@ -17,9 +17,9 @@ The structure of the project:
 
  a) add red noise
 
-2. Generation of the Reduced Basis for the model.
+ a) Add a stochastic gravitational wave background
 
-3. Analysis of the usual problem, so that proper comparisons can be done.
+1. Analysis of the usual problem, so that proper comparisons can be done.
 
    Notes on the original method:
 
@@ -28,9 +28,28 @@ The structure of the project:
    how to validate data processing methods by means of injection of new sources and then
    trying to recover them.
 
-====
+1. Generation of the Reduced Basis for the :math:`n^{T} \hat{s}`, where :math:`\hat{s} =
+   C^{-1} s`.
+
+1. Implement the covariance matrix to calculate the actual values of :math:`\hat{s}`
+
+1. Test the above code for specific noise realisations and search for the gravitational
+   waves in the mock data.
+
+1. Think about the ROQ for the :math:`mathcal{F}_e` and :math:`mathcal{F}_p` statistics
+   in three different regime:
+
+ a) When the Gravitational Wave Background (GWB) is known
+
+ a) When the GWB slope is known (find the actual references on Arxiv.org for this)
+
+ a) For a general GWB
+
+1. Check the model for multiple sources
+
+---
 Meanings of some symbols oftenly used in the cited papers and in this project.
-====
+---
 
 The original paper is slightly unclear about some of the parameters
 The parameter names:
@@ -51,6 +70,11 @@ The parameter names:
   .. math:: M^{5/3} = \frac{m_1 m_2}{(m_1 + m_2)^{1/3}}
 * :math:`\omega(t)` - orbital frequency
 * :math:`\Phi(t), \Phi_0` - orbital phase
+* :math:`s` - signal from the pulsar timing data
+* :math:`h \left(\vec{lambda}\right)` - the signal template depending on the parameters
+  :math:`\vec{\lambda}`
+* :math:`C` - The covariance matrix, which is used to calculate the multivariate noise
+  gaussian.
 
  .. [Ellis2010a] http://arxiv.org/abs/1204.4218
  .. [Corbin2008a] http://arxiv.org/abs/1008.1782
