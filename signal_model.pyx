@@ -209,7 +209,7 @@ def noise (double t, double var):
 # Define the residual as a function of parameters
 def individualSource (double t, double M, double D, double iota, double Phi0,
         double psi, double theta, double phi, double omega0, double L,
-        np.ndarray u_p, double var):
+        np.ndarray u_p):
     cdef double zeta, p
     cdef np.ndarray a, A
 
@@ -229,7 +229,7 @@ def signal (double t, np.ndarray sources, double L, np.ndarray u_p):
     for i in range(N):
         A += individualSource(t, sources[i].M, sources[i].D, sources[i].iota,
                 sources[i].Phi0, sources[i].psi, sources[i].theta, sources[i].phi,
-                sources[i].omega0, L, u_p, var)
+                sources[i].omega0, L, u_p)
 
     return A
 
