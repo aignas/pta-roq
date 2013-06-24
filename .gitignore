@@ -36,3 +36,11 @@ nosetests.xml
 
 # Ignore vim undo files
 .*un~
+
+# Cython stuff
+signal_model.c
+signal_model.cpython-33m.so*
+
+# Generated data
+pulsardata.txt.gz
+pulsarschedule.txt.gz

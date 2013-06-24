@@ -41,5 +41,5 @@ data, dates = sm.dataGeneration(schedule, sources, pulsars, t_final,
 
 # Save the data in a gz format. Numpy load txt understands gzipped files
 # transparently
-np.savetxt("../data-crunch/pulsardata.txt.gz", data)
-np.savetxt("../data-crunch/pulsarschedule.txt.gz", dates)
+np.savetxt("pulsardata.txt.gz", data)
+np.savetxt("pulsarschedule.txt.gz", dates)
