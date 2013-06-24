@@ -1,6 +1,5 @@
-===
 Pulsar Timing Array - Reduced Order Methods
-===
+===========================================
 
 This is my summer project on Pulsar Timming Array data fitting using Reduced Order
 Quadrature methods
@@ -17,9 +16,9 @@ The structure of the project (Note, that the meaning are bellow):
 
  a) add red noise
 
- a) Add a stochastic gravitational wave background
+ b) Add a stochastic gravitational wave background
 
-1. Analysis of the usual problem, so that proper comparisons can be done.
+2. Analysis of the usual problem, so that proper comparisons can be done.
 
    Notes on the original method:
 
@@ -28,28 +27,27 @@ The structure of the project (Note, that the meaning are bellow):
    how to validate data processing methods by means of injection of new sources and then
    trying to recover them.
 
-1. Generation of the Reduced Basis for the :math:`n^{T} \hat{s}`, where :math:`\hat{s} =
+3. Generation of the Reduced Basis for the :math:`n^{T} \hat{s}`, where :math:`\hat{s} =
    C^{-1} s`.
 
-1. Implement the covariance matrix to calculate the actual values of :math:`\hat{s}`
+4. Implement the covariance matrix to calculate the actual values of :math:`\hat{s}`
 
-1. Test the above code for specific noise realisations and search for the gravitational
+5. Test the above code for specific noise realisations and search for the gravitational
    waves in the mock data.
 
-1. Think about the ROQ for the :math:`mathcal{F}_e` and :math:`mathcal{F}_p` statistics
+6. Think about the ROQ for the :math:`mathcal{F}_e` and :math:`mathcal{F}_p` statistics
    in three different regime:
 
  a) When the Gravitational Wave Background (GWB) is known
 
- a) When the GWB slope is known (find the actual references on Arxiv.org for this)
+ b) When the GWB slope is known (find the actual references on Arxiv.org for this)
 
- a) For a general GWB
+ c) For a general GWB
 
-1. Check the model for multiple sources
+7. Check the model for multiple sources
 
----
 Meanings of some symbols oftenly used in the cited papers and in this project.
----
+------------------------------------------------------------------------------
 
 The original paper is slightly unclear about some of the parameters
 The parameter names:
