@@ -1,6 +1,9 @@
 #! /usr/bin/python2.7
 
+# Have some valuable things from Python 3
 from __future__ import print_function, division
+
+# The following was copied from a Cython manual
 import numpy as np
 # "cimport" is used to import special compile-time information
 # about the numpy module (this is stored in a file numpy.pxd which is
@@ -216,18 +219,27 @@ def individualSource (double t, double M, double D, double iota, double Phi0,
     p = pulsar (t, M, D, iota, Phi0, psi, theta, phi, omega0, L, u_p)
     return np.dot(a,A) + p
 
-# Define the residual as a function of parameters
-def residual (double t, np.ndarray sources, double L, np.ndarray u_p, double var):
-    cdef double n, A
+# A function calculating the signal
+def signal (double t, np.ndarray sources, double L, np.ndarray u_p):
+    cdef double n, A = 0
     cdef int N = sources.shape[0]
 
-    n = noise (t, var)
     A = 0
 
     for i in range(N):
         A += individualSource(t, sources[i].M, sources[i].D, sources[i].iota,
                 sources[i].Phi0, sources[i].psi, sources[i].theta, sources[i].phi,
                 sources[i].omega0, L, u_p, var)
+
+    return A
+
+# Define the residual as a function of parameters
+def residual (double t, np.ndarray sources, double L, np.ndarray u_p, double var):
+    cdef double n, A
+
+    n = noise (t, var)
+    A = signal (t, sources, L, u_p)
+
     return A + n
 
 # Generate the actual data.
