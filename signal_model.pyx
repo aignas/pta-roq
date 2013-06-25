@@ -204,43 +204,28 @@ def individualSource (double t, np.ndarray params, double L, np.ndarray u_p):
     p = pulsar (t, M, D, iota, Phi0, psi, theta, phi, omega0, L, u_p)
     return np.dot(a,A) + p
 
-# A function calculating the signal
-def signal (double t, np.ndarray sources, double L, np.ndarray u_p):
-    cdef double n, A = 0
-    cdef int N = sources.shape[0]
-
-    A = 0
-
-    for i in range(N):
-        A += individualSource(t, sources[i], L, u_p)
-
-    return A
-
 # Define the residual as a function of parameters
-def residual (double t, np.ndarray sources, double L, np.ndarray u_p, double var):
-    cdef double n, A
+def residual (double t, np.ndarray sources, double L, np.ndarray u_p, double variance):
+    cdef double Signal = 0
 
-    n = noise (t, var)
-    A = signal (t, sources, L, u_p)
+    # Add contributions to the signal from all GW sources
+    for i in range(sources.shape[0]):
+        Signal += individualSource(t, sources[i], L, u_p)
 
-    return A + n
+    # Add noise to the signal
+    Signal += noise (t, variance)
 
-# Generate the actual data.
-def dataGeneration (np.ndarray schedule, np.ndarray sources, pulsars, double t_final,
-                    double t_interval_min, double t_interval_max):
-    cdef double t, L, noise
+    return Signal
+
+def genSchedule (np.ndarray schedule, double t_final, double dt_min, double dt_max):
+    cdef double t
     cdef np.ndarray u_p
-    cdef np.ndarray a_out = np.array([]) , dates_out = np.array([])
-    cdef int N = pulsars.getNumber()
+    cdef np.ndarray dates_out = np.array([]), index_out = np.array([])
+    cdef int N = schedule.shape[0]
     collectData = True
 
-    a = []
-    dates = []
-    for i in range(N):
-        a += [ np.array([]) ]
-        dates += [ np.array([]) ]
-
     # Copy the structure of the array for the time log
+    dates = [np.array([])]*N
 
     # Start collecting the data
     while collectData:
@@ -258,20 +243,36 @@ def dataGeneration (np.ndarray schedule, np.ndarray sources, pulsars, double t_f
                 # not "gone" in to the future
                 collectData = True
 
-            # Set some temporary values
-            L = pulsars.getLength(i)
-            u_p = pulsars.getUnitVector(i)
-            noise = pulsars.getNoise(i)
-            a[i] = np.append(a[i], residual(t, sources, L, u_p, noise))
-
-            # Update a schedule for this pulsar. We just generate a random number
-            schedule[i] += np.random.rand()*abs(t_interval_max - t_interval_min) + \
-                  t_interval_min
+            # Update a schedule for this pulsar. We randomise the next measurement a bit
+            schedule[i] += np.random.rand() * abs(dt_max - dt_min) + dt_min
 
     # FIXME Spit out the data in a format we need
     # Contract the data into a one vector
     for i in range(N):
-        a_out = np.append(a_out, a[i])
         dates_out = np.append(dates_out, dates[i])
+        index_out = np.append(index_out, [i]*dates[i].shape[0])
 
-    return a_out, dates_out
+    return np.append([index_out], [dates_out], axis=0)
+
+# Generate the actual data.
+def dataGeneration (np.ndarray schedule, np.ndarray sources, pulsars, addNoise = True):
+    cdef double t, L, noise
+    cdef np.ndarray u_p
+    cdef np.ndarray a = np.array([])
+    cdef int N = pulsars.getNumber()
+
+    # Copy the structure of the array for the time log
+
+    # Start collecting the data
+    for i in range(schedule.shape[1]):
+
+        # Set some temporary values
+        L = pulsars.getLength(schedule[0,i])
+        u_p = pulsars.getUnitVector(schedule[0,i])
+        if addNoise:
+            noise = pulsars.getNoise(schedule[0,i])
+        else:
+            noise = 0
+        a = np.append(a, residual(schedule[1,i], sources, L, u_p, noise))
+
+    return a

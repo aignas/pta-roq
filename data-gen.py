@@ -19,15 +19,15 @@ yr = 52 * week
 # Stop the generation here
 t_final = 5*yr
 # Interval when we do not take any measurements
-t_interval_min = 2 * week
-t_interval_max = 2 * week
+dt_min = 2 * week
+dt_max = 2 * week
 # Max number of timings
 N_t_max = 1
 N_t_min = 1
 #
 
-# Time schedule of the pulsar timing:
-schedule = np.random.rand(N) * 0
+# Initial times for each pulsar measurement:
+time_init = np.random.rand(N) * 0
 
 # Define our pulsar grid and the sources
 pulsars = sm.PulsarGrid (N, PulsarCoordinateRanges, pulsarNoise)
@@ -42,10 +42,13 @@ sources = np.array([
   ])
 
 # Generate the actual data.
-data, dates = sm.dataGeneration(schedule, sources, pulsars, t_final,
-                          t_interval_min, t_interval_max)
+print("Generate a measurement schedule")
+schedule = sm.genSchedule(time_init, t_final, dt_min, dt_max)
+print("Generate the data according to the schedule")
+data = sm.dataGeneration(schedule, sources, pulsars)
 
 # Save the data in a gz format. Numpy load txt understands gzipped files
 # transparently
+print("Save the generated data and the schedule")
 np.savetxt("pulsardata.txt.gz", data)
-np.savetxt("pulsarschedule.txt.gz", dates)
+np.savetxt("pulsarschedule.txt.gz", schedule)
