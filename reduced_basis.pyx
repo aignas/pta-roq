@@ -1,3 +1,4 @@
+??? from here until ???END lines may have been inserted/deleted
 #! /usr/bin/python2.7
 
 from __future__ import print_function, division
@@ -13,7 +14,7 @@ from libc.math cimport sin, cos, sqrt
 import pyximport; pyximport.install()
 import signal_model as sm
 
-def ROMGreedy (np.ndarray lambda, h, double epsilon):
+def ROMGreedy (np.ndarray params, h, double epsilon):
     """This will generate a reduced basis in the given parameter space.
 
     Args:
@@ -41,15 +42,19 @@ def ROMGreedy (np.ndarray lambda, h, double epsilon):
     """
 
     # Initialise some variables
-    cdef int i = 0
-    cdef np.ndarray sigma, RB, tmp_l
-    tmp_l.resize(lambda.shape[0])
+    cdef double projection
+    cdef int i = 0, translateIt
+    cdef np.ndarray sigma, RB, tmp_l, params_i, params_trial, Grammian
+    tmp_l.resize(params.shape[0])
     
-    # Initialise the parameter space
+    # Initialise the parameter space and calculate the size of the parameter space
+    # (total number of points)
     paramSpace = []
-    for i in lambda:
+    totalNumber = 1
+    for i in params:
         paramSpace += [ np.linspace(i[0], i[1], i[2]) ]
-
+        totalNumber = totalNumber * i[2]
+    
     # Seed choice (arbitrary)
     RB.resize(len(paramSpace))
     for i in range(RB.shape[0]):
@@ -63,11 +68,34 @@ def ROMGreedy (np.ndarray lambda, h, double epsilon):
     while sigma[i] > epsilon:
         i += 1
         sigma[i] = 0
+        projection = 0
+        Grammian = np.zeros((i,i))
 
-        # Find the 
-        # find the max of sigma = || h - p(i-1)h||^2
-        # Save the lambda value when sigma is max
+        # Stupidly traverse the entire parameter space
+        # NOTE: We could have MCMC or a simple MC method as well
+        for j in range(totalNumber):
+            # the params_trial does not have to be zeroed away
+            # This is a temporary variable
+            translateIt = j
 
-        # RB = np.append(RB, lambda_i)
+            # Construct the test vector of the parameters
+            for k in range(len(paramSpace)):
+                n = translateIt % params[k][2]
+                params_trial[k] = paramSpace[k][n]
+                translateIt = translateIt // params[k][2]
+
+            # Construct the Gram matrix
+
+            # Calculate the projection
+
+            sigmaTrial = np.abs(sm.signal(t, params, L, u_p) - projection)
+            sigmaTrial *= sigmaTrial
+
+            if sigmaTrial > sigma[i]:
+                sigma[i] = sigmaTrial
+                params_i = params_trial
+
+        # Add the lambda_i, which was found by maximizing
+        RB = np.append(RB, params_i)
 
     return RB
