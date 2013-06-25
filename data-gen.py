@@ -1,4 +1,4 @@
-#! /usr/bin/python2.7
+#! /usr/bin/env python2.7
 
 from __future__ import print_function, division
 
@@ -31,9 +31,15 @@ schedule = np.random.rand(N) * 0
 
 # Define our pulsar grid and the sources
 pulsars = sm.PulsarGrid (N, PulsarCoordinateRanges, pulsarNoise)
-sources = np.array([ sm.Source( M=5, D=10e9*5, iota=2, Phi0=1, psi=2,
-                                theta=0.5, phi=0.2, omega0=2*np.pi*1e-8)
-                    ])
+# Define the parameters for each source. The sources matrix is of the form:
+# sources = np.array([
+#   [M, D, iota, Phi0, psi, theta, phi, omega0],         1st source
+#   [M, D, iota, Phi0, psi, theta, phi, omega0],         2nd source
+#   ])
+
+sources = np.array([
+  [ 5, 10e9*5, 2, 1, 2, 0.5, 0.2, 2*np.pi*1e-8]  # 1st source
+  ])
 
 # Generate the actual data.
 data, dates = sm.dataGeneration(schedule, sources, pulsars, t_final,

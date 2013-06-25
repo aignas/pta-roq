@@ -89,22 +89,6 @@ class PulsarGrid:
     def getNumber (self):
         return self.__R.shape[0]
 
-class Source:
-    #cdef double self.M, self.D, self.iota, self.Phi0, self.psi, # Extrinsic params
-    #            self.theta, self.phi, self.omega0               # Intrinsic params
-
-    def __init__ (self, double M=5, double iota=0, double Phi0=0, double psi=0,
-            double theta=0, double phi=0, double omega0=1e-8, **kwargs):
-        # Read the arguments and if they are not given, just randomize
-        self.M = M
-        self.D = kwargs.get('D', 10e9 * self.M)
-        self.iota = iota
-        self.Phi0 = Phi0
-        self.psi = psi
-        self.theta = theta
-        self.phi = phi
-        self.omega0 = omega0
-
 # define antenna pattern functions as in (9) and (10)
 # The F[0] term is Fplus and F[1] is Fcross
 def antennaPattern (double theta, double phi, np.ndarray u_p):
@@ -207,11 +191,12 @@ def noise (double t, double var):
     return np.random.randn() * sqrt(var)
 
 # Define the residual as a function of parameters
-def individualSource (double t, double M, double D, double iota, double Phi0,
-        double psi, double theta, double phi, double omega0, double L,
-        np.ndarray u_p):
-    cdef double zeta, p
+def individualSource (double t, np.ndarray params, double L, np.ndarray u_p):
+    cdef double M, D, iota, Phi0, psi, theta, phi, omega0, zeta, p
     cdef np.ndarray a, A
+
+    # Unpack all the parameters:
+    M, D, iota, Phi0, psi, theta, phi, omega0 = params.tolist()
 
     zeta = M**(5/3)/D
     a = amplitude(zeta, iota, phi, psi)
@@ -227,9 +212,7 @@ def signal (double t, np.ndarray sources, double L, np.ndarray u_p):
     A = 0
 
     for i in range(N):
-        A += individualSource(t, sources[i].M, sources[i].D, sources[i].iota,
-                sources[i].Phi0, sources[i].psi, sources[i].theta, sources[i].phi,
-                sources[i].omega0, L, u_p)
+        A += individualSource(t, sources[i], L, u_p)
 
     return A
 
