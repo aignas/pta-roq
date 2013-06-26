@@ -1,6 +1,6 @@
-====
+================================================
  Pulsar Timing Array - Reduced Order Quadrature
-====
+================================================
 
 In this branch I have all the papers I am planning to read or have already read. All of
 them were obtained from arxiv.org and the list is as follows:
@@ -17,5 +17,8 @@ them were obtained from arxiv.org and the list is as follows:
  .. [Taylor2012b]     GWB http://arxiv.org/abs/1210.6014
  .. [vHaasteren2013a] GWB http://arxiv.org/abs/1301.6673
  .. [Ellis2013a]      GWB http://arxiv.org/abs/1302.1903
-9604033v3.pdf
-9804014v1.pdf
+ .. [Canizares2013a]  ROQ http://arxiv.org/abs/1304.0462
+
+.. 
+    9604033v3.pdf
+    9804014v1.pdf
