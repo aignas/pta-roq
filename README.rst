@@ -8,51 +8,19 @@ Quadrature methods
 The structure of the project:
 -----------------------------
 
-1. This is a simple data generator using the Ellis et al. paper [Ellis2010a]_. You need
-   Cython in order to run the code. Also, refer to the paper by Corbin and Cornish
-   [Corbin2008a]_ for some detail on the formulae derivations. There is also the
-   Jaranowski et al. [Jaranowski2008a]_ paper for explanation of intrinsic and extrinsic
-   parameter classification.
+1. A Data generator (90%)
 
-   TODO:
+2. A Reduced Basis (RB) generator (50%)
 
- a) add red noise
+3. A parameter fitting program:
 
- b) Add a stochastic gravitational wave background
+ a) Using the conventional methods, described by [vanHaasteren2012a]_ and [Ellis2010a]_.
+ (0%)
 
- c) Use CUDA or C++ to speed things up?
+ b) Using RB methods (%)
 
-2. Analysis of the usual problem, so that proper comparisons can be done.
-
-   Notes on the original method:
-
-   There is also a speed-up version of the [Ellis2010a]_ formalism presented by
-   [vanHaasteren2012a]_. Also, there is a paper by [Petiteau2012a]_, which presents a
-   genetic algorithm of MCMC and this could be one of the best ways how to validate data
-   processing methods by means of injection of new sources and then trying to recover
-   them. This method is very good as it can be parallelized significantly.
-
-3. Generation of the Reduced Basis for the :math:`n^{T} \hat{s}`, where :math:`\hat{s} =
-   C^{-1} s`.
-
-4. Implement the covariance matrix to calculate the actual values of :math:`\hat{s}`
-
-5. Test the above code for specific noise realisations and search for the gravitational
-   waves in the mock data.
-
-6. Think about the ROQ for the :math:`\mathcal{F}_e` and :math:`\mathcal{F}_p` statistics
-   in three different regime:
-
- a) When the Gravitational Wave Background (GWB) is known
-
- b) When the GWB slope is known (find the actual references on Arxiv.org for this)
-
- c) For a general GWB
-
-7. Check the model for multiple sources
-
-Meanings of symbols
--------------------
+Meanings of symbols used in the project
+---------------------------------------
 
 Meanings of some symbols often used in the cited papers and in this project. The
 original paper (by [Ellis2010a]_) was slightly unclear about some of the parameters,
