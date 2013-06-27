@@ -1,4 +1,3 @@
-??? from here until ???END lines may have been inserted/deleted
 #! /usr/bin/python2.7
 
 from __future__ import print_function, division
@@ -14,7 +13,7 @@ from libc.math cimport sin, cos, sqrt
 import pyximport; pyximport.install()
 import signal_model as sm
 
-def ROMGreedy (np.ndarray params, h, double epsilon):
+def ROMGreedy (np.ndarray params, template, double epsilon):
     """This will generate a reduced basis in the given parameter space.
 
     Args:
@@ -26,8 +25,8 @@ def ROMGreedy (np.ndarray params, h, double epsilon):
                  ...
                  (param^n_min, param^n_max, param^n_step))
 
-        h: a function which is used as a basis. This also is used to construct the
-            training set.
+        template: a function which is used as a basis. This also is used to construct
+            the training set.
 
         epsilon: a measure of the error, when constructing the RB
 
@@ -69,7 +68,7 @@ def ROMGreedy (np.ndarray params, h, double epsilon):
         i += 1
         sigma[i] = 0
         projection = 0
-        Grammian = np.zeros((i,i))
+        Grammian = constructGrammian (RB, template)
 
         # Stupidly traverse the entire parameter space
         # NOTE: We could have MCMC or a simple MC method as well
@@ -88,7 +87,7 @@ def ROMGreedy (np.ndarray params, h, double epsilon):
 
             # Calculate the projection
 
-            sigmaTrial = np.abs(sm.signal(t, params, L, u_p) - projection)
+            sigmaTrial = np.abs(template(t, params, L, u_p) - projection)
             sigmaTrial *= sigmaTrial
 
             if sigmaTrial > sigma[i]:
@@ -99,3 +98,12 @@ def ROMGreedy (np.ndarray params, h, double epsilon):
         RB = np.append(RB, params_i)
 
     return RB
+
+def constructGrammian (set, template):
+    G = np.zeros(set.shape[1], set.shape[1])
+
+    for i in range(G.shape[0]):
+        for j in range(G.shape[0]):
+            G[i,j] = template(1,2)
+
+    return G
