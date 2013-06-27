@@ -8,16 +8,15 @@ Quadrature methods
 The structure of the project:
 -----------------------------
 
-1. A Data generator (90%)
+1. A Data generator (94%)
 
 2. A Reduced Basis (RB) generator (50%)
 
 3. A parameter fitting program:
 
- a) Using the conventional methods, described by [vanHaasteren2012a]_ and [Ellis2010a]_.
- (0%)
+ a) Using the conventional methods, described by [vanHaasteren2012a]_ and [Ellis2010a]_. (30%)
 
- b) Using RB methods (%)
+ b) Using RB methods (0 %)
 
 Meanings of symbols used in the project
 ---------------------------------------
