@@ -20,7 +20,7 @@ ctypedef np.int_t DTYPE_t
 # "def" can type its arguments but not have a return type. The type of the
 # arguments for a "def" function is checked at run-time when entering the
 # function.
-from libc.math cimport sin, cos, sqrt
+from libc.math cimport sin, cos, sqrt, tgamma
 
 # The following will code up the equations (16) to (19) from the Ellis et al. (see
 # README)
@@ -57,10 +57,10 @@ class UnitVectors:
 # This will be a Pulsar Array data structure and we access the data in it the lazy
 # way.
 class PulsarGrid:
-    def __init__ (self, int N, ranges, noise):
+    def __init__ (self, int N, ranges, whiteNoise):
         # These wil be polar coordinates of the pulsars
         self.__R = np.random.rand(N,3)
-        self.__Noise = np.random.rand(N)*noise
+        self.__Noise = np.random.rand(N)*whiteNoise
 
         # Transform the random number distributions to span the ranges defined by the
         # user
@@ -68,7 +68,7 @@ class PulsarGrid:
         for i in range(3):
             self.__R[:,i] = self.__R[:,i] * abs(ranges[i,0] - ranges[i,1]) + ranges[i].min()
 
-    def getNoise (self, int idx):
+    def getWhiteNoise (self, int idx):
         return self.__Noise[idx]
 
     def getAngles (self):
@@ -270,9 +270,58 @@ def dataGeneration (np.ndarray schedule, np.ndarray sources, pulsars, addNoise =
         L = pulsars.getLength(schedule[0,i])
         u_p = pulsars.getUnitVector(schedule[0,i])
         if addNoise:
-            noise = pulsars.getNoise(schedule[0,i])
+            noise = pulsars.getWhiteNoise(schedule[0,i])
         else:
             noise = 0
         a = np.append(a, residual(schedule[1,i], sources, L, u_p, noise))
 
     return a
+
+# Calculate the GWB terms in the covariance matrix members.
+def covarianceMatrixMemberGWB (i, j, a, b, A, f, gamma, tau, N, pulsars):
+    cdef double C, alpha, sum, sum_member
+
+    # Calculate the geometric term depending on the position of the pulsars.
+    C = 1/2 * (1 - np.dot( pulsars.getUnitVector(a), pulsars.getUnitVector(b)))
+
+    alpha = 3/2 * C * log(C) - C/4 + 1/2
+    # a simple delta function implementation
+    if a == b:
+        alpha += 1/2
+
+    # Here I use slightly more memory by storring each_member before summing it, but
+    # this way I do not have to calculate horrible factorials and it should speed things
+    # up a bit
+    sum_member = - 1 / (1 + gamma)
+    sum = sum_member
+    for i in range(1,N):
+        sum_member *= - (f * tau)**2 / (2*i + 1) * (2*i + 2) * (2*i - 1 - gamma) / (2*i
+                + 1 - gamma)
+        sum += sum_member
+
+    return A**2 * alpha / ((2*np.pi)**2 * f**(1+gamma)) * (
+            tgamma(-1-gamma) * sin(-np.pi*gamma/2) * (f*tau)**(1+gamma) - sum
+            )
+
+# Calculate white noise terms
+def covarianceMatrixMemberWN (i,j,a,b,pulsars):
+    # r is the return value and N should be the noise amplitude
+    cdef double N = pulsars.getWhiteNoise(a), r = 0
+
+    if a==b and i==j:
+        r = N**2
+
+    return r
+
+# Calculate red noise Lorentzian terms
+def covarianceMatrixMemberLor (i,j,a,b,pulsars,f,tau):
+    # r is the return value and N should be the noise amplitude
+    cdef double N = pulsars.getRedNoise(a), r = 0
+    
+    if a==b:
+        r = N**2 * exp(-f*tau)
+
+    return r
+
+# Calculate the power law spectral noise
+# TODO
