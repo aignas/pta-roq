@@ -18,7 +18,7 @@ def ROMGreedy (np.ndarray params, template, double epsilon):
 
     Args:
 
-        lambda: A parameter space value. At the moment it is assumed to be of the
+        params: A parameter space value. At the moment it is assumed to be of the
             following structure:
                 ((param^1_min, param^1_max, param^1_step),
                  (param^2_min, param^2_max, param^2_step),
@@ -40,14 +40,9 @@ def ROMGreedy (np.ndarray params, template, double epsilon):
                  (param^n_1, param^n_2, param^n_3, ... , param^n_m))
     """
 
-    # Initialise some variables
-    cdef double projection
-    cdef int i = 0, translateIt
-    cdef np.ndarray sigma, RB, tmp_l, params_i, params_trial, Grammian
-    tmp_l.resize(params.shape[0])
-    
-    # Initialise the parameter space and calculate the size of the parameter space
-    # (total number of points)
+    # Initialise an empty Grammaian, the parameter space and calculate the size of the
+    # parameter space (total number of points)
+    Grammian = np.array([])
     paramSpace = []
     totalNumber = 1
     for i in params:
@@ -60,16 +55,18 @@ def ROMGreedy (np.ndarray params, template, double epsilon):
         RB[i] = paramSpace[i][0]
 
     # Initiate the greedy algorithm
-    sigma.resize(1)
-    sigma[0] = 1
+    sigma = np.append(1)
 
     # The parameter space is large, so the computation will be expensive
-    while sigma[i] > epsilon:
-        i += 1
-        sigma[i] = 0
-        projection = 0
-        Grammian = constructGrammian (RB, template)
+    while sigma[-1] > epsilon:
+        i = RB.shape[0]
+        sigma = np.append(0)
+        Grammian = constructGrammian (RB, template, Grammian, matrix)
 
+        # Construct the Gram matrix inverse
+        G_inv = np.inverse(Grammian)
+
+        # FIXME I need to check the rest of this function thoroughly
         # Stupidly traverse the entire parameter space
         # NOTE: We could have MCMC or a simple MC method as well
         for j in range(totalNumber):
@@ -82,8 +79,6 @@ def ROMGreedy (np.ndarray params, template, double epsilon):
                 n = translateIt % params[k][2]
                 params_trial[k] = paramSpace[k][n]
                 translateIt = translateIt // params[k][2]
-
-            # Construct the Gram matrix
 
             # Calculate the projection
 
@@ -99,11 +94,82 @@ def ROMGreedy (np.ndarray params, template, double epsilon):
 
     return RB
 
-def constructGrammian (set, template):
-    G = np.zeros(set.shape[1], set.shape[1])
+def covarianceMatrix (pulsars, schedule, GWB = false, WhiteNoise = true, RedNoise = false, PowerLaw = false):
+    # Construct a zero matrix
+    matrix = np.zeros (vec1.shape, vec1.shape)
+    cdef int a, b, N
+    cdef double ta, tb, gamma, gamma_a, tau, f_L, freqerror
 
-    for i in range(G.shape[0]):
-        for j in range(G.shape[0]):
-            G[i,j] = template(1,2)
+    # Set gamma to 7/3 as we assume the the GWB comes mainly from SMBHBs
+    gamma = 7/3
+    # The lower frequency cut off. It should be much larger than the observation time
+    freqerror = 1e-5
+    f_L = freqerror / pulsars[1,-1]
+
+    # Truncate the series in the power law and the GWB noise after N iterations
+    N = 1e4
+
+    # Let the GWB amplitude be small
+    A_GWB = 0.01
+
+    if GWB:
+        for i in range(matrix.shape[0]):
+            for j in range(matrix.shape[1]):
+                a, ta = schedule[:,i]
+                b, tb = schedule[:,j]
+                tau = 2*np.pi * (ta - tb)
+                # From the pulsars we need only the unit vectors and the noise
+                # magnitude, we could probably do it here, as it would make the code
+                # look better
+                C = 1/2 * (1 - np.dot( pulsars.getUnitVector(a), pulsars.getUnitVector(b)))
+                matrix[i,j] += sm.covarianceMatrixMemberGWB (i, j, a, b, A, f_L, gamma, tau,
+                        N, C)
+
+    if WhiteNoise:
+        for i in range(matrix.shape[0]):
+            a = schedule[0,i]
+            A_WN = pulsars.getWhiteNoise(a)
+            matrix[i,i] += sm.covarianceMatrixMemberWN (i, i, a, a, A_WN)
+
+    # FIXME Implement the methods
+    # if RedNoise
+    # if PowerLaw
+
+
+    return matrix
+
+
+def innerProduct (vec1, vec2, matrix):
+    # The return value
+    r = 0
+
+    # Do a vector multiplication (this method should not use too much memory)
+    for i in ranger(vec2.shape[0]):
+        r += vec1[i] * np.dot(matrix[:,i],vec2)
+
+    return r
+
+def constructGrammian (set, template, G, matrix):
+    """
+    Here we construct the Grammian matrix and we do it in a clever way. We take the
+    previous matrix and extend it, because when we increase the number of basis in our
+    set, we need to change only a very small part of the matrix.
+
+    Also we are using the fact that the Grammian matrix is symmetric
+    """
+    tmp = G
+    G = np.zeros(set.shape[0], set.shape[0])
+    if tmp.shape[0] != 0:
+        G[:-1,:-1] = tmp
+
+    # Generate one of the templates
+    vec1 = template (schedule, set[-1], pulsars)
+    G[-1,-1] = innerProduct(template1, template1)
+
+    # Use the fact that Grammian is symmetric
+    for i in range(G.shape[0] - 1):
+        vec2 = sm.dataGeneration(schedule, set[i], pulsars)
+        G[i,-1] = innerProduct(vec1, vec2, matrix)
+        G[-1,i] = G[i,-1]
 
     return G
