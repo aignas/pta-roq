@@ -10,7 +10,7 @@ import numpy as np
 # scattered accross some length
 N = 36
 PulsarCoordinateRanges = np.array([ [10,40],[0.2,1.],[-0.5,0.5]])
-pulsarNoise = 0.003
+pulsarNoise = np.array([0.003, 0, 0])
 
 # Some time variables so that it is easier to read the code
 week = 7*24*3600
