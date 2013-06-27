@@ -18,6 +18,7 @@ them were obtained from arxiv.org and the list is as follows:
  .. [vHaasteren2013a] GWB http://arxiv.org/abs/1301.6673
  .. [Ellis2013a]      GWB http://arxiv.org/abs/1302.1903
  .. [Canizares2013a]  ROQ http://arxiv.org/abs/1304.0462
+ .. [Taylor2013a]     GWB http://arxiv.org/abs/1306.5395
 
 .. 
     9604033v3.pdf
