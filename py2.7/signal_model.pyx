@@ -304,11 +304,8 @@ def dataGeneration (np.ndarray schedule, np.ndarray sources, pulsars,
     return a
 
 # Calculate the GWB terms in the covariance matrix members.
-def covarianceMatrixMemberGWB (i, j, a, b, A, f, gamma, tau, N, pulsars):
+def covarianceMatrixMemberGWB (i, j, a, b, A, f, gamma, tau, N, C):
     cdef double C, alpha, sum, sum_member
-
-    # Calculate the geometric term depending on the position of the pulsars.
-    C = 1/2 * (1 - np.dot( pulsars.getUnitVector(a), pulsars.getUnitVector(b)))
 
     alpha = 3/2 * C * log(C) - C/4 + 1/2
     # a simple delta function implementation
@@ -331,9 +328,9 @@ def covarianceMatrixMemberGWB (i, j, a, b, A, f, gamma, tau, N, pulsars):
             )
 
 # Calculate white noise terms
-def covarianceMatrixMemberWN (i,j,a,b,pulsars):
+def covarianceMatrixMemberWN (i,j,a,b,N):
     # r is the return value and N should be the noise amplitude
-    cdef double N = pulsars.getWhiteNoise(a), r = 0
+    cdef double r = 0
 
     if a==b and i==j:
         r = N**2
@@ -341,9 +338,9 @@ def covarianceMatrixMemberWN (i,j,a,b,pulsars):
     return r
 
 # Calculate red noise Lorentzian terms
-def covarianceMatrixMemberLor (i,j,a,b,pulsars,f,tau):
+def covarianceMatrixMemberLor (i,j,a,b,N,f,tau):
     # r is the return value and N should be the noise amplitude
-    cdef double N = pulsars.getRedNoise(a), r = 0
+    cdef double r = 0
     
     if a==b:
         r = N**2 * exp(-f*tau)
@@ -351,8 +348,8 @@ def covarianceMatrixMemberLor (i,j,a,b,pulsars,f,tau):
     return r
 
 # Calculate the power law spectral noise
-def covarianceMatrixMemberPowLaw (i, j, a, b, pulsars, f, tau, gamma, N):
-    cdef double A = pulsars.getPowLawNoise(a), r = 0
+def covarianceMatrixMemberPowLaw (i, j, a, b, A, f, tau, gamma, N):
+    cdef double r = 0
 
     if a==b:
         # Here I use a similar technique to the one explained in
