@@ -34,7 +34,7 @@ My TODO list:
   2. Implement a way to construct the RB by randomly selecting M vectors all the time and
      finding the reduced basis in this set.
     
-    The second method should be better when the set of RB is sufficiently large.
+     The second method should be better when the set of RB is sufficiently large.
 
  2. How to calculate the projections efficiently, so that we do not have lots of memory
     occupied?
