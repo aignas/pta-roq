@@ -13,7 +13,7 @@ from libc.math cimport sin, cos, sqrt
 import pyximport; pyximport.install()
 import signal_model as sm
 
-def ROMGreedy (np.ndarray params, template, double epsilon):
+def ROMGreedy (schedule, params, pulsars, matrix, epsilon):
     """This will generate a reduced basis in the given parameter space.
 
     Args:
@@ -25,8 +25,8 @@ def ROMGreedy (np.ndarray params, template, double epsilon):
                  ...
                  (param^n_min, param^n_max, param^n_step))
 
-        template: a function which is used as a basis. This also is used to construct
-            the training set.
+        schedule: An array which contains all the ids of the pulsars and when they
+        were/going to be measured.
 
         epsilon: a measure of the error, when constructing the RB
 
@@ -50,8 +50,9 @@ def ROMGreedy (np.ndarray params, template, double epsilon):
         totalNumber = totalNumber * i[2]
     
     # Seed choice (arbitrary)
-    RB.resize(len(paramSpace))
+    RB = np.zeros(len(paramSpace))
     for i in range(RB.shape[0]):
+        # FIXME randomize this bit.
         RB[i] = paramSpace[i][0]
 
     # Initiate the greedy algorithm
@@ -61,7 +62,7 @@ def ROMGreedy (np.ndarray params, template, double epsilon):
     while sigma[-1] > epsilon:
         i = RB.shape[0]
         sigma = np.append(0)
-        Grammian = constructGrammian (RB, template, Grammian, matrix)
+        Grammian = constructGrammian (RB, matrix, Grammian)
 
         # Construct the Gram matrix inverse
         G_inv = np.inverse(Grammian)
@@ -69,6 +70,8 @@ def ROMGreedy (np.ndarray params, template, double epsilon):
         # FIXME I need to check the rest of this function thoroughly
         # Stupidly traverse the entire parameter space
         # NOTE: We could have MCMC or a simple MC method as well
+        # Can we edit the ranges where we are searching by discarding regions in
+        # parameter space when we find the vectors? (Suggestion by Priscilla)
         for j in range(totalNumber):
             # the params_trial does not have to be zeroed away
             # This is a temporary variable
@@ -81,9 +84,16 @@ def ROMGreedy (np.ndarray params, template, double epsilon):
                 translateIt = translateIt // params[k][2]
 
             # Calculate the projection
+            projection = 0
+            for k in range(RB.shape[0]):
+                for l in range(RB.shape[0])):
+                    projection += G_inv[k,l] * innerProduct(
+                                sm.dataGeneration(schedule, params_trial, pulsars)
+                                sm.dataGeneration(schedule, RB[l], pulsars) 
+                                matrix) * sm.dataGeneration(schedule, RB[k], pulsars)
 
-            sigmaTrial = np.abs(template(t, params, L, u_p) - projection)
-            sigmaTrial *= sigmaTrial
+            norm = sm.dataGeneration(schedule, params_trial, pulsars) - projection
+            norm *= np.conjugate(norm)
 
             if sigmaTrial > sigma[i]:
                 sigma[i] = sigmaTrial
@@ -135,41 +145,64 @@ def covarianceMatrix (pulsars, schedule, GWB = false, WhiteNoise = true, RedNois
     # if RedNoise
     # if PowerLaw
 
-
     return matrix
 
 
 def innerProduct (vec1, vec2, matrix):
+    """
+    This is the vector product, which is the main bottleneck in the calculation.
+
+    The function needs to be given two vectors and a matrix and the dimensionalities
+    should match.
+    """
     # The return value
     r = 0
 
-    # Do a vector multiplication (this method should not use too much memory)
-    for i in ranger(vec2.shape[0]):
-        r += vec1[i] * np.dot(matrix[:,i],vec2)
+    if matrix.shape[0] == vec2.shape[0] and matrix.shape[1] == vec1.shape[0]:
+        # Do a vector multiplication (this method should not use too much memory)
+        for i in ranger(vec2.shape[0]):
+            r += vec1[i] * np.dot(matrix[:,i],vec2)
+    else:
+        print("Error!!!!")
 
     return r
 
-def constructGrammian (set, template, G, matrix):
+def constructGrammian (set, matrix, G=np.array([])):
     """
     Here we construct the Grammian matrix and we do it in a clever way. We take the
     previous matrix and extend it, because when we increase the number of basis in our
     set, we need to change only a very small part of the matrix.
 
-    Also we are using the fact that the Grammian matrix is symmetric
+    Also we are using the fact that the Grammian matrix is symmetric.
+
+    Also, if the given Grammian is empty, but RB is larger than one member, we will
+    calculate the Grammian from scratch.
     """
     tmp = G
     G = np.zeros(set.shape[0], set.shape[0])
-    if tmp.shape[0] != 0:
+    calculateAll = (G.shape[0] != 1 and tmp.shape[0] == 0)
+    if not calculateAll and tmp.shape[0] == 0:
         G[:-1,:-1] = tmp
 
-    # Generate one of the templates
-    vec1 = template (schedule, set[-1], pulsars)
-    G[-1,-1] = innerProduct(template1, template1)
+    if not calculateAll:
+        # Generate one of the templates
+        vec1 = sm.dataGeneration (schedule, set[-1], pulsars)
+        G[-1,-1] = innerProduct(template1, template1)
 
-    # Use the fact that Grammian is symmetric
-    for i in range(G.shape[0] - 1):
-        vec2 = sm.dataGeneration(schedule, set[i], pulsars)
-        G[i,-1] = innerProduct(vec1, vec2, matrix)
-        G[-1,i] = G[i,-1]
+        # Use the fact that Grammian is symmetric
+        for i in range(G.shape[0] - 1):
+            vec2 = sm.dataGeneration(schedule, set[i], pulsars)
+            G[i,-1] = innerProduct(vec1, vec2, matrix)
+            G[-1,i] = G[i,-1]
+    else:
+        # Use the fact that Grammian is symmetric
+        for i in range(G.shape[0]):
+            # Generate one of the templates
+            vec1 = sm.dataGeneration (schedule, set[i], pulsars)
+            for j in range(G.shape[0]):
+                vec2 = sm.dataGeneration (schedule, set[j], pulsars)
+                G[i,j] = innerProduct(vec1, vec2, matrix)
+                if i != j:
+                    G[j,i] = G[i,j]
 
     return G
