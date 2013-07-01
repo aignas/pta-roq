@@ -305,7 +305,7 @@ def dataGeneration (np.ndarray schedule, np.ndarray sources, pulsars,
 
 # Calculate the GWB terms in the covariance matrix members.
 def covarianceMatrixMemberGWB (i, j, a, b, A, f, gamma, tau, N, C):
-    cdef double C, alpha, sum, sum_member
+    cdef double alpha, sum, sum_member
 
     alpha = 3/2 * C * log(C) - C/4 + 1/2
     # a simple delta function implementation
