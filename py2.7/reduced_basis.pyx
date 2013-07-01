@@ -13,10 +13,15 @@ from libc.math cimport sin, cos, sqrt
 import pyximport; pyximport.install()
 import signal_model as sm
 
-def ROMGreedy (schedule, params, pulsars, matrix, epsilon):
+def ROMGreedy (schedule, pulsars, params, matrix, epsilon):
     """This will generate a reduced basis in the given parameter space.
 
     Args:
+
+        schedule: An array which contains all the ids of the pulsars and when they
+        were/going to be measured.
+
+        pulsars: The pulsar array, which contains all the properties of the pulsars
 
         params: A parameter space value. At the moment it is assumed to be of the
             following structure:
@@ -24,9 +29,6 @@ def ROMGreedy (schedule, params, pulsars, matrix, epsilon):
                  (param^2_min, param^2_max, param^2_step),
                  ...
                  (param^n_min, param^n_max, param^n_step))
-
-        schedule: An array which contains all the ids of the pulsars and when they
-        were/going to be measured.
 
         epsilon: a measure of the error, when constructing the RB
 
@@ -49,60 +51,72 @@ def ROMGreedy (schedule, params, pulsars, matrix, epsilon):
         paramSpace += [ np.linspace(i[0], i[1], i[2]) ]
         totalNumber = totalNumber * i[2]
     
-    # Seed choice (arbitrary)
+    # Seed choice (arbitrary). We just randomize the first choice. We also select the
+    # first error arbitrary. This is just to have the same dimensions of two arrays
+    sigma = np.append(1)
     RB = np.zeros(len(paramSpace))
     for i in range(RB.shape[0]):
-        # FIXME randomize this bit.
-        RB[i] = paramSpace[i][0]
-
-    # Initiate the greedy algorithm
-    sigma = np.append(1)
+        j = np.random.randint(paramSpace[i].shape[0])
+        RB[i] = paramSpace[i][j]
 
     # The parameter space is large, so the computation will be expensive
     while sigma[-1] > epsilon:
-        i = RB.shape[0]
         sigma = np.append(0)
-        Grammian = constructGrammian (RB, matrix, Grammian)
 
-        # Construct the Gram matrix inverse
-        G_inv = np.inverse(Grammian)
+        # Construct the Gram matrix and its inverse
+        Grammian, Grammian_inv = constructGrammian (RB, matrix, Grammian)
 
         # FIXME I need to check the rest of this function thoroughly
         # Stupidly traverse the entire parameter space
         # NOTE: We could have MCMC or a simple MC method as well
         # Can we edit the ranges where we are searching by discarding regions in
         # parameter space when we find the vectors? (Suggestion by Priscilla)
-        for j in range(totalNumber):
+        for i in range(totalNumber):
             # the params_trial does not have to be zeroed away
             # This is a temporary variable
-            translateIt = j
+            translateIt = i
 
             # Construct the test vector of the parameters
-            for k in range(len(paramSpace)):
-                n = translateIt % params[k][2]
-                params_trial[k] = paramSpace[k][n]
-                translateIt = translateIt // params[k][2]
+            for j in range(len(paramSpace)):
+                n = translateIt % params[j][2]
+                params_trial[j] = paramSpace[j][n]
+                translateIt = translateIt // params[j][2]
 
             # Calculate the projection
-            projection = 0
-            for k in range(RB.shape[0]):
-                for l in range(RB.shape[0])):
-                    projection += G_inv[k,l] * innerProduct(
-                                sm.dataGeneration(schedule, params_trial, pulsars)
-                                sm.dataGeneration(schedule, RB[l], pulsars) 
-                                matrix) * sm.dataGeneration(schedule, RB[k], pulsars)
+            projection = projectOnRB (schedule, pulsars, RB, matrix, param_trial, Grammian_inv)
 
+            # Calculate modulus in a clever way (Or maybe not so clever, but I believe,
+            # that it will use slightly less memory comparing to a oneliner)
             norm = sm.dataGeneration(schedule, params_trial, pulsars) - projection
             norm *= np.conjugate(norm)
 
-            if sigmaTrial > sigma[i]:
-                sigma[i] = sigmaTrial
+            # Store the error, if it is larger than the last one
+            if norm > sigma[-1]:
+                sigma[-1] = norm
                 params_i = params_trial
 
-        # Add the lambda_i, which was found by maximizing
+        # Add the lambda_i, which was found by maximizing the error
         RB = np.append(RB, params_i)
 
     return RB
+
+def projectOnRB (schedule, pulsars, RB, matrix, param_trial, G_inv):
+    # Perform various checks whether the given parameters are valid.
+    if G_inv.shape[0] != RB.shape:
+        print("ERROR: The given grammian doesn't have the required dimensions")
+
+    p = np.zeros(matrix.shape[0])
+
+    for i in range (RB.shape[0]):
+        c_i = np.zeros (matrix.shape[0])
+        for j in range (RB.shape[0]):
+            c_i += G_inv[i,j] * innerProduct(
+                    sm.dataGeneration(schedule, params_trial, pulsars),
+                    sm.dataGeneration(schedule, RB[j], pulsars),
+                    matrix)
+        p += c_i * sm.dataGeneration(schedule, RB[i], pulsars)
+
+    return p
 
 def covarianceMatrix (pulsars, schedule, GWB = false, WhiteNoise = true, RedNoise = false, PowerLaw = false):
     # Construct a zero matrix
@@ -177,6 +191,18 @@ def constructGrammian (set, matrix, G=np.array([])):
 
     Also, if the given Grammian is empty, but RB is larger than one member, we will
     calculate the Grammian from scratch.
+
+    Args:
+        set: The basis set to use for construction
+
+        matrix: The matrix to use for the inner product
+
+        G: The Grammian matrix which we want to extend, because the set was only
+        extended from the previous calculation
+
+    Returns:
+
+        New G and the inverse of it.
     """
     tmp = G
     G = np.zeros(set.shape[0], set.shape[0])
@@ -205,4 +231,7 @@ def constructGrammian (set, matrix, G=np.array([])):
                 if i != j:
                     G[j,i] = G[i,j]
 
-    return G
+
+    G_inv = np.inverse(G)
+
+    return G, G_inv
