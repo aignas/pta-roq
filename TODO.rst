@@ -105,6 +105,9 @@ Think about the ROQ for the :math:`\mathcal{F}_e` and :math:`\mathcal{F}_p` stat
 Check the model for multiple sources
 ------------------------------------
 
+References
+----------
+
  .. [Petiteau2012a] http://arxiv.org/abs/1210.2396
  .. [Canizares2013a] http://arxiv.org/abs/1304.0462
 
