@@ -59,12 +59,15 @@ def ROMGreedy (schedule, pulsars, params, matrix, epsilon):
         j = np.random.randint(paramSpace[i].shape[0])
         RB[i] = paramSpace[i][j]
 
+    # Initiate the params_trial var
+    params_trial = np.zeros(RB[0].shape[0])
+
     # The parameter space is large, so the computation will be expensive
     while sigma[-1] > epsilon:
         sigma = np.append(0)
 
         # Construct the Gram matrix and its inverse
-        Grammian, Grammian_inv = constructGrammian (RB, matrix, Grammian)
+        Grammian, Grammian_inv = constructGrammian (schedule, pulsars, RB, matrix, Grammian)
 
         # FIXME I need to check the rest of this function thoroughly
         # Stupidly traverse the entire parameter space
@@ -83,7 +86,7 @@ def ROMGreedy (schedule, pulsars, params, matrix, epsilon):
                 translateIt = translateIt // params[j][2]
 
             # Calculate the projection
-            projection = projectOnRB (schedule, pulsars, RB, matrix, param_trial, Grammian_inv)
+            projection = projectOnRB (schedule, pulsars, RB, matrix, params_trial, Grammian_inv)
 
             # Calculate modulus in a clever way (Or maybe not so clever, but I believe,
             # that it will use slightly less memory comparing to a oneliner)
@@ -100,7 +103,7 @@ def ROMGreedy (schedule, pulsars, params, matrix, epsilon):
 
     return RB
 
-def projectOnRB (schedule, pulsars, RB, matrix, param_trial, G_inv):
+def projectOnRB (schedule, pulsars, RB, matrix, params_trial, G_inv):
     # Perform various checks whether the given parameters are valid.
     if G_inv.shape[0] != RB.shape:
         print("ERROR: The given grammian doesn't have the required dimensions")
@@ -118,9 +121,9 @@ def projectOnRB (schedule, pulsars, RB, matrix, param_trial, G_inv):
 
     return p
 
-def covarianceMatrix (pulsars, schedule, GWB = false, WhiteNoise = true, RedNoise = false, PowerLaw = false):
+def covarianceMatrix (pulsars, schedule, GWB=False, WhiteNoise=True, RedNoise=False, PowerLaw=False):
     # Construct a zero matrix
-    matrix = np.zeros (vec1.shape, vec1.shape)
+    matrix = np.zeros (schedule.shape, schedule.shape)
     cdef int a, b, N
     cdef double ta, tb, gamma, gamma_a, tau, f_L, freqerror
 
@@ -131,12 +134,11 @@ def covarianceMatrix (pulsars, schedule, GWB = false, WhiteNoise = true, RedNois
     f_L = freqerror / pulsars[1,-1]
 
     # Truncate the series in the power law and the GWB noise after N iterations
-    N = 1e4
-
-    # Let the GWB amplitude be small
-    A_GWB = 0.01
+    N = 10000
 
     if GWB:
+        # Let the GWB amplitude be small
+        A_GWB = 0.01
         for i in range(matrix.shape[0]):
             for j in range(matrix.shape[1]):
                 a, ta = schedule[:,i]
@@ -146,7 +148,7 @@ def covarianceMatrix (pulsars, schedule, GWB = false, WhiteNoise = true, RedNois
                 # magnitude, we could probably do it here, as it would make the code
                 # look better
                 C = 1/2 * (1 - np.dot( pulsars.getUnitVector(a), pulsars.getUnitVector(b)))
-                matrix[i,j] += sm.covarianceMatrixMemberGWB (i, j, a, b, A, f_L, gamma, tau,
+                matrix[i,j] += sm.covarianceMatrixMemberGWB (i, j, a, b, A_GWB, f_L, gamma, tau,
                         N, C)
 
     if WhiteNoise:
@@ -174,14 +176,14 @@ def innerProduct (vec1, vec2, matrix):
 
     if matrix.shape[0] == vec2.shape[0] and matrix.shape[1] == vec1.shape[0]:
         # Do a vector multiplication (this method should not use too much memory)
-        for i in ranger(vec2.shape[0]):
+        for i in range(vec2.shape[0]):
             r += vec1[i] * np.dot(matrix[:,i],vec2)
     else:
         print("Error!!!!")
 
     return r
 
-def constructGrammian (set, matrix, G=np.array([])):
+def constructGrammian (schedule, pulsars, set, matrix, G=np.array([])):
     """
     Here we construct the Grammian matrix and we do it in a clever way. We take the
     previous matrix and extend it, because when we increase the number of basis in our
@@ -213,7 +215,7 @@ def constructGrammian (set, matrix, G=np.array([])):
     if not calculateAll:
         # Generate one of the templates
         vec1 = sm.dataGeneration (schedule, set[-1], pulsars)
-        G[-1,-1] = innerProduct(template1, template1)
+        G[-1,-1] = innerProduct(vec1, vec1, matrix)
 
         # Use the fact that Grammian is symmetric
         for i in range(G.shape[0] - 1):
