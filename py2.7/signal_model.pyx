@@ -9,14 +9,7 @@ import numpy as np
 # about the numpy module (this is stored in a file numpy.pxd which is
 # currently part of the Cython distribution).
 cimport numpy as np
-# We now need to fix a datatype for our arrays. I've used the variable
-# DTYPE for this, which is assigned to the usual NumPy runtime
-# type info object.
-DTYPE = np.int
-# "ctypedef" assigns a corresponding compile-time type to DTYPE_t. For
-# every type in the numpy module there's a corresponding compile-time
-# type with a _t-suffix.
-ctypedef np.int_t DTYPE_t
+
 # "def" can type its arguments but not have a return type. The type of the
 # arguments for a "def" function is checked at run-time when entering the
 # function.
@@ -27,7 +20,9 @@ from libc.math cimport sin, cos, sqrt, exp, log
 
 # This is a class for unit vectors. I have a feeling, that the p vector might be not
 # necessary here
-class UnitVectors:
+cdef class UnitVectors:
+    cdef double theta, phi
+
     def __init__ (self, double theta, double phi):
         # Shorthands for sines and cosines
         self.theta = theta
@@ -36,7 +31,7 @@ class UnitVectors:
     def Omega (self):
         # define a unit vector \hat{\Omega} as shown in the (4)
         return np.array([
-        -sin(self.theta)*cos(self.theta),
+            -sin(self.theta)*cos(self.phi),
             -sin(self.theta)*sin(self.phi),
             -cos(self.theta)])
 
@@ -50,56 +45,59 @@ class UnitVectors:
     def n (self):
         # define a unit vector \hat{n} as shown in the (6)
         return np.array([
-            -cos(self.theta)*cos(self.theta),
+            -cos(self.theta)*cos(self.phi),
             -cos(self.theta)*sin(self.phi),
             sin(self.theta)])
 
 # This will be a Pulsar Array data structure and we access the data in it the lazy
 # way.
-class PulsarGrid:
-    def __init__ (self, int N, ranges, noise):
+cdef class PulsarGrid:
+    cdef np.ndarray R, Noise
+    cdef int i
+
+    def __init__ (self, int N, np.ndarray ranges, np.ndarray noise):
         # These wil be polar coordinates of the pulsars
-        self.__R = np.random.rand(N,3)
+        self.R = np.random.rand(N,3)
 
         # Three kinds of noises. And the actual realisations of them are not correlated
-        self.__Noise = np.random.rand(N,3)
+        self.Noise = np.random.rand(N,3)
 
         # Transform the random number distributions to span the ranges defined by the
         # user. Also scale the noises so that we can define different ratios of white,
         # red and power law noise.
         for i in range(3):
-            self.__R[:,i] = self.__R[:,i] * abs(ranges[i,0] - ranges[i,1]) + ranges[i].min()
-            self.__Noise[:,i] *= noise[i]
+            self.R[:,i] = self.R[:,i] * abs(ranges[i,0] - ranges[i,1]) + ranges[i].min()
+            self.Noise[:,i] *= noise[i]
 
     def getNoise (self, int idx):
-        return self.__Noise[idx,:]
+        return self.Noise[idx,:]
 
     def getWhiteNoise (self, int idx):
-        return self.__Noise[idx,0]
+        return self.Noise[idx,0]
 
     def getRedNoise (self, int idx):
-        return self.__Noise[idx,1]
+        return self.Noise[idx,1]
 
     def getPowLawNoise (self, int idx):
-        return self.__Noise[idx,2]
+        return self.Noise[idx,2]
 
     def getAngles (self):
-        return self.__R[:,1:3]
+        return self.R[:,1:3]
 
     def getUnitVector (self, int idx):
         p = np.zeros(3)
-        p[0] =  sin (self.__R[idx,1])
+        p[0] =  sin (self.R[idx,1])
         p[1] =  p[0]
-        p[2] =  cos (self.__R[idx,1])
-        p[0] *= cos (self.__R[idx,2])
-        p[1] *= sin (self.__R[idx,2])
+        p[2] =  cos (self.R[idx,1])
+        p[0] *= cos (self.R[idx,2])
+        p[1] *= sin (self.R[idx,2])
         return p
 
     def getLength (self, int idx):
-        return self.__R[idx,0]
+        return self.R[idx,0]
 
     def getNumber (self):
-        return self.__R.shape[0]
+        return self.R.shape[0]
 
 # define antenna pattern functions as in (9) and (10)
 # The F[0] term is Fplus and F[1] is Fcross
@@ -233,10 +231,11 @@ def individualSource (double t, np.ndarray params, double L, np.ndarray u_p):
 # Define the residual as a function of parameters
 def residual (double t, np.ndarray sources, double L, np.ndarray u_p, np.ndarray variance):
     cdef double Signal = 0
+    cdef int i
 
     # Add contributions to the signal from all GW sources
-    for i in range(sources.shape[0]):
-        Signal += individualSource(t, sources[i], L, u_p)
+    for i in range(0,sources.shape[0],8):
+        Signal += individualSource(t, sources[i:i+8], L, u_p)
 
     # Add noise to the signal
     Signal += noise (t, variance)
@@ -249,6 +248,7 @@ def genSchedule (np.ndarray schedule, double t_final, double dt_min, double dt_m
     cdef np.ndarray dates_out = np.array([]), index_out = np.array([])
     cdef int N = schedule.shape[0]
     collectData = True
+    cdef int i
 
     # Copy the structure of the array for the time log
     dates = [np.array([])]*N
@@ -286,6 +286,7 @@ def dataGeneration (np.ndarray schedule, np.ndarray sources, pulsars,
     cdef double t, L
     cdef np.ndarray u_p, a = np.array([]), noise = np.zeros(3)
     cdef int N = pulsars.getNumber()
+    cdef int i
 
     # Copy the structure of the array for the time log
 
@@ -306,6 +307,7 @@ def dataGeneration (np.ndarray schedule, np.ndarray sources, pulsars,
 # Calculate the GWB terms in the covariance matrix members.
 def covarianceMatrixMemberGWB (i, j, a, b, A, f, gamma, tau, N, C):
     cdef double alpha, sum, sum_member
+    cdef int k
 
     alpha = 3/2 * C * log(C) - C/4 + 1/2
     # a simple delta function implementation
@@ -318,9 +320,9 @@ def covarianceMatrixMemberGWB (i, j, a, b, A, f, gamma, tau, N, C):
     # This function calculates N terms and then truncates the series
     sum_member = - 1 / (1 + gamma)
     sum = sum_member
-    for i in range(N):
-        sum_member *= - (f * tau)**2 / ((2*i + 1) * (2*i + 2)) * (2*i - 1 - gamma) \
-                      / (2*i + 1 - gamma)
+    for k in range(N):
+        sum_member *= - (f * tau)**2 / ((2*k + 1) * (2*k + 2)) * (2*k - 1 - gamma) \
+                      / (2*k + 1 - gamma)
         sum += sum_member
 
     return A**2 * alpha / ((2 * np.pi)**2 * f**(1 + gamma)) \
@@ -349,15 +351,16 @@ def covarianceMatrixMemberLor (i,j,a,b,N,f,tau):
 # Calculate the power law spectral noise
 def covarianceMatrixMemberPowLaw (i, j, a, b, A, f, tau, gamma, N):
     cdef double r = 0
+    cdef int k
 
     if a==b:
         # Here I use a similar technique to the one explained in
         # covarianceMatrixMemberGWB
         sum_member = 1 / (1 - gamma)
         sum = sum_member
-        for i in range(N):
-            sum_member *= - (f * tau)**2 / ((2*i + 1) * (2*i + 2)) * (2*i + 1 - gamma) \
-                          / (2*i + 3 - gamma)
+        for k in range(N):
+            sum_member *= - (f * tau)**2 / ((2*k + 1) * (2*k + 2)) * (2*k + 1 - gamma) \
+                          / (2*k + 3 - gamma)
             sum += sum_member
 
         r =  A**2 / (f**(gamma - 1)) \

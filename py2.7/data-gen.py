@@ -33,12 +33,12 @@ time_init = np.random.rand(N) * 0
 pulsars = sm.PulsarGrid (N, PulsarCoordinateRanges, pulsarNoise)
 # Define the parameters for each source. The sources matrix is of the form:
 # sources = np.array([
-#   [M, D, iota, Phi0, psi, theta, phi, omega0],         1st source
-#   [M, D, iota, Phi0, psi, theta, phi, omega0],         2nd source
+#   M, D, iota, Phi0, psi, theta, phi, omega0,         1st source
+#   M, D, iota, Phi0, psi, theta, phi, omega0,         2nd source
 #   ])
 
 sources = np.array([
-  [ 5, 10e9*5, 2, 1, 2, 0.5, 0.2, 2*np.pi*1e-8]  # 1st source
+   5, 10e9*5, 2, 1, 2, 0.5, 0.2, 2*np.pi*1e-8  # 1st source
   ])
 
 # Generate the actual data.

@@ -9,7 +9,7 @@ import numpy as np
 
 # I generate N pulsars in the solid angle defined by \theta and \phi randomly
 # scattered accross some length
-N = 36
+N = 6
 PulsarCoordinateRanges = np.array([ [10,40],[0, np.pi],[-np.pi, np.pi]])
 pulsarNoise = np.array([0.003, 0, 0])
 
@@ -18,7 +18,7 @@ week = 7*24*3600
 yr = 52 * week
 
 # Stop the generation here
-t_final = 5*yr
+t_final = 0.5*yr
 # Interval when we do not take any measurements
 dt_min = 2 * week
 dt_max = 2 * week
@@ -34,12 +34,12 @@ time_init = np.random.rand(N) * 0
 pulsars = sm.PulsarGrid (N, PulsarCoordinateRanges, pulsarNoise)
 # Define the parameters for each source. The sources matrix is of the form:
 # sources = np.array([
-#   [M, D, iota, Phi0, psi, theta, phi, omega0],         1st source
-#   [M, D, iota, Phi0, psi, theta, phi, omega0],         2nd source
+#   M, D, iota, Phi0, psi, theta, phi, omega0,         1st source
+#   M, D, iota, Phi0, psi, theta, phi, omega0,         2nd source
 #   ])
 
 sources = np.array([
-  [ 5, 10e9*5, 2, 1, 2, 0.5, 0.2, 2*np.pi*1e-8]  # 1st source
+  5, 10e9*5, 2, 1, 2, 0.5, 0.2, 2*np.pi*1e-8  # 1st source
   ])
 
 # Generate the actual data.
@@ -49,18 +49,23 @@ print("Generate the data according to the schedule")
 data = sm.dataGeneration(schedule, sources, pulsars)
 
 params = np.array([
-  [ [5,5,1], 
+  # 1 source
+    [5,5,1], 
     [10e9*5, 10e9*5, 1], 
     [2, 2, 1], 
     [1, 1, 1], 
     [2,2,1], 
-    [0,1,100], 
-    [0,0.5,100],
-    [1e-8, 1e-9, 100]
-    ]
+    [0.4,0.6,10], 
+    [0.1,0.3,10],
+    [1.9*np.pi*1e-8, 2.1*np.pi*1e-9, 10]
   ])
 
-#print(data.shape)
+print("Calculate the covariance Matrix and it's inverse")
+matrix, matrix_inv = rb.covarianceMatrix (pulsars, schedule)
+epsilon = 1e-3
+
+print("Construct the reduced basis")
+RB = rb.ROMGreedy (schedule, pulsars, params, matrix_inv, epsilon)
 
 # Save the data in a gz format. Numpy load txt understands gzipped files
 # transparently
