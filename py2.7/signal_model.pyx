@@ -20,7 +20,7 @@ ctypedef np.int_t DTYPE_t
 # "def" can type its arguments but not have a return type. The type of the
 # arguments for a "def" function is checked at run-time when entering the
 # function.
-from libc.math cimport sin, cos, sqrt, tgamma, exp, log
+from libc.math cimport sin, cos, sqrt, exp, log
 
 # The following will code up the equations (16) to (19) from the Ellis et al. (see
 # README)
@@ -184,7 +184,7 @@ def basis (double omega0, double M, double theta, double phi, double t, np.ndarr
     return A
 
 # Define the pulsar term as in the eq (17)
-def pulsar (double t, double M, double D, double iota, double Phi0, double psi,
+def pulsarTerm (double t, double M, double D, double iota, double Phi0, double psi,
         double theta, double phi, double omega0, double L, np.ndarray u_p):
     cdef np.ndarray F, s
     cdef double tp, zeta
@@ -227,7 +227,7 @@ def individualSource (double t, np.ndarray params, double L, np.ndarray u_p):
     zeta = M**(5/3)/D
     a = amplitude(zeta, iota, phi, psi)
     A = basis (omega0, M, theta, phi, t, u_p)
-    p = pulsar (t, M, D, iota, Phi0, psi, theta, phi, omega0, L, u_p)
+    p = pulsarTerm (t, M, D, iota, Phi0, psi, theta, phi, omega0, L, u_p)
     return np.dot(a,A) + p
 
 # Define the residual as a function of parameters
@@ -319,13 +319,12 @@ def covarianceMatrixMemberGWB (i, j, a, b, A, f, gamma, tau, N, C):
     sum_member = - 1 / (1 + gamma)
     sum = sum_member
     for i in range(N):
-        sum_member *= - (f * tau)**2 / ((2*i + 1) * (2*i + 2)) * (2*i - 1 - gamma) / (2*i
-                + 1 - gamma)
+        sum_member *= - (f * tau)**2 / ((2*i + 1) * (2*i + 2)) * (2*i - 1 - gamma) \
+                      / (2*i + 1 - gamma)
         sum += sum_member
 
-    return A**2 * alpha / ((2*np.pi)**2 * f**(1+gamma)) * (
-            tgamma(-1-gamma) * sin(-np.pi*gamma/2) * (f*tau)**(1+gamma) - sum
-            )
+    return A**2 * alpha / ((2 * np.pi)**2 * f**(1 + gamma)) \
+           / (np.gamma(-1 - gamma) * sin(-np.pi * gamma / 2) * (f*tau)**(1 + gamma) - sum)
 
 # Calculate white noise terms
 def covarianceMatrixMemberWN (i,j,a,b,N):
@@ -357,13 +356,12 @@ def covarianceMatrixMemberPowLaw (i, j, a, b, A, f, tau, gamma, N):
         sum_member = 1 / (1 - gamma)
         sum = sum_member
         for i in range(N):
-            sum_member *= - (f * tau)**2 / ((2*i + 1) * (2*i + 2)) * (2*i + 1 - gamma) / (2*i
-                    + 3 - gamma)
+            sum_member *= - (f * tau)**2 / ((2*i + 1) * (2*i + 2)) * (2*i + 1 - gamma) \
+                          / (2*i + 3 - gamma)
             sum += sum_member
 
-        r =  A**2 / (f**(gamma - 1)) * (
-                tgamma(1 - gamma) * sin(np.pi*gamma/2) * (f*tau)**(gamma-1) - sum
-                )
+        r =  A**2 / (f**(gamma - 1)) \
+             * (np.gamma(1 - gamma) * sin(np.pi * gamma /2) * (f * tau)**( gamma -1) - sum)
     
     # Return the computed value
     return r
