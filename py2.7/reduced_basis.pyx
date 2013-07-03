@@ -100,7 +100,7 @@ def ROMGreedy (np.ndarray schedule, pulsars, np.ndarray[double, ndim=2] params, 
             # Calculate modulus in a clever way (Or maybe not so clever, but I believe,
             # that it will use slightly less memory comparing to a oneliner)
             difference = sm.dataGeneration(schedule, params_trial, pulsars) - projection
-            sigma_trial[i] = innerProduct(difference, difference, matrix)
+            sigma_trial[i] = np.dot(difference,difference)
 
         sigma = np.append(sigma, sigma_trial.max())
         N_i = sigma_trial.argmax()
