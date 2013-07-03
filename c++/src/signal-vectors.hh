@@ -1,41 +1,25 @@
+/* This is a major rewrite of the code to make it more parallel
+ *
+ */
+
 #include <vector>
-#include <cav/Vec3.hh>
 
 class UnitVectors {
+    // We have two angles and evaluate vectors on the fly
     private:
         double mTheta, mPhi;
+
     public:
-        UnitVectors (double theta, double phi);
-        UnitVectors~ ();
+        UnitVectors (double, double);
 
-        cav::Vec3 Omega ();
-        cav::Vec3 m ();
-        cav::Vec3 n ();
-}
+        // Empty constructor
+        UnitVectors ();
 
-UnitVectors::UnitVectors (double theta, double phi) {
-    mTheta = theta;
-    mPhi = phi;
-}
+        // Desctructor
+        ~UnitVectors () {}
 
-UnitVectors::Omega () {
-    return cav::Vec3 (
-            -sin(mTheta)*cos(mPhi),
-            -sin(mTheta)*sin(mPhi),
-            -cos(mTheta))
-}
+        std::vector<double> Omega ();
+        std::vector<double> m ();
+        std::vector<double> n ();
+};
 
-UnitVectors::m () {
-    return cav::Vec3 (
-            -sin(mPhi),
-            cos(mPhi),
-            0)
-}
-
-UnitVectors::n () {
-    return cav::Vec3 (
-            -cos(mTheta)*cos(mPhi),
-            -cos(mTheta)*sin(mPhi),
-             sin(mTheta)
-            )
-}
