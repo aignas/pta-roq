@@ -7,13 +7,14 @@ import numpy as np
 cimport numpy as np
 
 from libc.math cimport sin, cos, sqrt
-from cython.parallel import parallel, prange
 
 import pyximport; pyximport.install()
 import signal_model as sm
 
-def ROMGreedy (np.ndarray schedule, pulsars, np.ndarray params, 
-        np.ndarray matrix, double epsilon):
+from cython.parallel import parallel, prange
+
+def ROMGreedy (np.ndarray schedule, pulsars, np.ndarray[double, ndim=2] params, \
+        np.ndarray[double, ndim=2] matrix, double epsilon):
     """This will generate a reduced basis in the given parameter space.
 
     Args:
@@ -44,47 +45,57 @@ def ROMGreedy (np.ndarray schedule, pulsars, np.ndarray params,
 
     # Initialise an empty Grammaian, the parameter space and calculate the size of the
     # parameter space (total number of points)
-    cdef np.ndarray Grammian = np.array([]), Grammian_inv, sigma, RB, params_trial, \
-            params_i, sigma_trial, projections, paramSpace
-
-    # Some fast way to define the paramDimensions variable
+    cdef np.ndarray[double, ndim=2] Grammian, Grammian_inv, RB, RB_tmp, \
+            projectionCoeffs, projectionCoeffs_tmp
+    cdef np.ndarray[double] sigma, params_trial, sigma_trial, paramSpace, params_tmp, \
+            projection_tmp, projection
+    cdef np.ndarray paramDimensions
     cdef int i
-    cdef np.ndarray[int] paramDimensions = np.array([], dtype=int)
 
+    # Initialize empty arrays (or allocate memory):
+    Grammian = np.array([[]])
+    paramDimensions = np.array([], dtype='i4')
     paramSpace = np.array([])
-    for i in range(params.shape[0]):
+
+    for i in xrange(params.shape[0]):
         paramSpace = np.append(paramSpace, np.linspace(params[i,0], params[i,1], params[i,2]))
         paramDimensions = np.append(paramDimensions, int(params[i,2]))
 
     totalNumber = paramDimensions.prod()
 
     sigma_trial = np.zeros(totalNumber)
-    projections = np.zeros((totalNumber,1))
+    projectionCoeffs = np.zeros((totalNumber,1))
     
     # Seed choice (arbitrary). We just randomize the first choice. We also select the
     # first error arbitrary. This is just to have the same dimensions of two arrays
-    sigma = np.array([1])
+    sigma = np.array([1.], dtype=np.double)
 
     # Randomize the first basis
-    RB = ID2param(np.random.randint(totalNumber), paramSpace, paramDimensions)
+    RB = np.zeros((params.shape[0],1))
+    params_tmp = ID2param(np.random.randint(totalNumber), paramSpace, paramDimensions)
+    for i in xrange(RB.shape[0]):
+        RB[i,0] = params_tmp[i]
 
     # The parameter space is large, so the computation will be expensive
     while sigma[-1] > epsilon:
         # Construct the Gram matrix and its inverse
         Grammian, Grammian_inv = constructGrammian (schedule, pulsars, RB, matrix, Grammian)
 
-        # FIXME I need to check the rest of this function thoroughly
         # Stupidly traverse the entire parameter space
         # NOTE: We could have MCMC or a simple MC method as well
         # Can we edit the ranges where we are searching by discarding regions in
         # parameter space when we find the vectors? (Suggestion by Priscilla)
-        for i in range(totalNumber):
+        for i in xrange(totalNumber):
             # the params_trial does not have to be zeroed away
             # This is a temporary variable
             params_trial = ID2param(i, paramSpace, paramDimensions)
 
             # Calculate the projection
-            projection = projectOnRB(schedule, pulsars, RB, matrix, params_trial, Grammian_inv)
+            projection_tmp = projectOnRBcoeff(schedule, pulsars, RB, matrix,
+                    params_trial, Grammian_inv, projectionCoeffs[i])
+            projectionCoeffs[i,-1] = projection_tmp[-1]
+
+            projection = projectOnRB(schedule, pulsars, RB, projection_tmp)
 
             # Calculate modulus in a clever way (Or maybe not so clever, but I believe,
             # that it will use slightly less memory comparing to a oneliner)
@@ -95,38 +106,59 @@ def ROMGreedy (np.ndarray schedule, pulsars, np.ndarray params,
         N_i = sigma_trial.argmax()
 
         # Add the lambda_i, which was found by maximizing the error
-        RB = np.append(RB, ID2param(N_i, paramSpace, paramDimensions).reshape(RB.shape[0],1) , axis=1)
+        params_tmp = ID2param(N_i, paramSpace, paramDimensions)
+        RB_tmp = RB
+        RB = np.zeros((RB_tmp.shape[0], RB_tmp.shape[1] + 1 ))
+        for i in xrange(RB_tmp.shape[0]):
+            RB[i,RB_tmp.shape[1]] = params_tmp[i]
+            for j in xrange(RB_tmp.shape[1]):
+                RB[i,j] = RB_tmp[i,j]
+
+        # extend the projectionCoeffs matrix
+        projectionCoeffs_tmp = projectionCoeffs
+        projectionCoeffs = np.zeros((projectionCoeffs.shape[0], projectionCoeffs.shape[1] + 1))
+        for i in xrange(projectionCoeffs_tmp.shape[0]):
+            for j in xrange(projectionCoeffs_tmp.shape[1]):
+                projectionCoeffs[i,j] = projectionCoeffs_tmp[i,j]
+
         print("Number of RB and the error: " + str(sigma.shape[0]) + " " + str(sigma[-1]))
 
     return RB
 
-def projectOnRB (np.ndarray schedule, pulsars, np.ndarray RB, 
-        np.ndarray matrix, np.ndarray params_trial, np.ndarray G_inv):
+def projectOnRBcoeff (np.ndarray schedule, pulsars, np.ndarray[double, ndim=2] RB, 
+        np.ndarray[double, ndim=2] matrix, np.ndarray[double] params_trial,
+        np.ndarray[double, ndim=2] G_inv,  np.ndarray[double] coefs):
     # Perform various checks whether the given parameters are valid.
     if G_inv.shape[0] != RB.shape[1]:
         print("ERROR: The given grammian doesn't have the required dimensions")
 
     # Initialize some variables
-    cdef np.ndarray p = np.zeros(matrix.shape[0])
-    cdef double c_i
+    cdef int i = coefs.shape[0] - 1, j
+
+    for j in xrange(RB.shape[1]):
+        coefs[i] += G_inv[i,j] * innerProduct(
+                sm.dataGeneration(schedule, params_trial, pulsars),
+                sm.dataGeneration(schedule, RB[:,j], pulsars),
+                matrix)
+
+    return coefs
+
+# FIXME this function doesn't work
+def projectOnRB (np.ndarray schedule, pulsars, np.ndarray[double, ndim=2] RB,
+        np.ndarray[double, ndim=1] coefs):
+    # Initialize some variables
+    cdef np.ndarray[double] p = coefs[0] * sm.dataGeneration(schedule, RB[:,0], pulsars)
     cdef int i, j
 
-    for i in range (RB.shape[1]):
-        c_i = 0
-        for j in range (RB.shape[1]):
-            c_i += G_inv[i,j] * innerProduct(
-                    sm.dataGeneration(schedule, params_trial, pulsars),
-                    sm.dataGeneration(schedule, RB[:,j], pulsars),
-                    matrix)
-
-        p += c_i * sm.dataGeneration(schedule, RB[:,i], pulsars)
+    for i in xrange(1,RB.shape[1]):
+        p += coefs[i] * sm.dataGeneration(schedule, RB[:,i], pulsars)
 
     return p
 
 def covarianceMatrix (pulsars, np.ndarray schedule, GWB=False, 
         WhiteNoise=True, RedNoise=False, PowerLaw=False):
     # Construct a zero matrix
-    cdef np.ndarray matrix = np.zeros((schedule.shape[1], schedule.shape[1])), matrix_inv
+    cdef np.ndarray[double, ndim=2] matrix = np.zeros((schedule.shape[1], schedule.shape[1])), matrix_inv
     cdef int a, b, N
     cdef double ta, tb, gamma, gamma_a, tau, f_L, freqerror
     cdef int i, j
@@ -143,8 +175,8 @@ def covarianceMatrix (pulsars, np.ndarray schedule, GWB=False,
     if GWB:
         # Let the GWB amplitude be small
         A_GWB = 0.01
-        for i in range(matrix.shape[0]):
-            for j in range(matrix.shape[1]):
+        for i in xrange(matrix.shape[0]):
+            for j in xrange(matrix.shape[1]):
                 a, ta = schedule[:,i]
                 b, tb = schedule[:,j]
                 tau = 2*np.pi * (ta - tb)
@@ -156,7 +188,7 @@ def covarianceMatrix (pulsars, np.ndarray schedule, GWB=False,
                         N, C)
 
     if WhiteNoise:
-        for i in range(matrix.shape[0]):
+        for i in xrange(matrix.shape[0]):
             a = schedule[0,i]
             A_WN = pulsars.getWhiteNoise(a)
             matrix[i,i] += sm.covarianceMatrixMemberWN (i, i, a, a, A_WN)
@@ -190,8 +222,8 @@ def innerProduct (np.ndarray vec1, np.ndarray vec2, np.ndarray matrix):
 
     return r
 
-def constructGrammian (np.ndarray schedule, pulsars, np.ndarray set,
-        np.ndarray matrix, np.ndarray G=np.array([])):
+def constructGrammian (np.ndarray schedule, pulsars, np.ndarray[double, ndim=2] set,
+        np.ndarray[double, ndim=2] matrix, np.ndarray[double, ndim=2] tmp=np.array([[]])):
     """
     Here we construct the Grammian matrix and we do it in a clever way. We take the
     previous matrix and extend it, because when we increase the number of basis in our
@@ -214,47 +246,81 @@ def constructGrammian (np.ndarray schedule, pulsars, np.ndarray set,
 
         New G and the inverse of it.
     """
-    cdef np.ndarray tmp = G, vec1, vec2, G_inv
-    cdef int i, j
+    cdef np.ndarray[double, ndim=2] G, G_inv
+    cdef np.ndarray[double] vec1, vec2, params1, params2
+    cdef int i, j, k, size = tmp.shape[1], paramSize = set.shape[0]
 
     G = np.zeros((set.shape[1], set.shape[1]))
 
     # Check if the given G dimensionality is one lower than the set and if the given set
     # consists more than one vector
 
-    if (set.shape[1] != 1 and tmp.shape[0] == 0):
+    if (size == 0):
+        print("Constructing the Gram matrix")
         # Use the fact that Grammian is symmetric
-        for i in range(G.shape[0]):
+        for i in xrange(G.shape[0]):
+
+            # Construct a parameter vector
+            params1 = np.zeros(paramSize)
+            for j in xrange(paramSize):
+                params1[j] = set[j,i]
+
             # Generate one of the templates
-            vec1 = sm.dataGeneration (schedule, set[:,i], pulsars)
-            for j in range(G.shape[0]):
-                vec2 = sm.dataGeneration (schedule, set[:,j], pulsars)
+            vec1 = sm.dataGeneration (schedule, params1, pulsars)
+
+            G[i,i] = innerProduct(vec1, vec1, matrix)
+            for j in xrange(i+1, G.shape[0]):
+
+                # Construct a parameter vector
+                params2 = np.zeros(paramSize)
+                for k in xrange(paramSize):
+                    params2[k] = set[k,j]
+
+                vec2 = sm.dataGeneration (schedule, params2, pulsars)
                 G[i,j] = innerProduct(vec1, vec2, matrix)
-                if i != j:
-                    G[j,i] = G[i,j]
+                G[j,i] = G[i,j]
     else:
-        G[:-1,:-1] = tmp
+        print("Extending the Gram matrix")
+        for i in xrange(size):
+            G[i,i] = tmp[i,i]
+            for j in xrange(i + 1, size - 1):
+                G[i,j] = tmp[i,j]
+                G[j,i] = tmp[j,i]
+
+        # Construct a parameter vector
+        params1 = np.zeros(paramSize)
+        for j in xrange(paramSize):
+            params1[j] = set[j,size]
+
         # Generate one of the templates
-        vec1 = sm.dataGeneration (schedule, set[:,-1], pulsars)
-        G[-1, -1] = innerProduct(vec1, vec1, matrix)
+        vec1 = sm.dataGeneration (schedule, params1, pulsars)
+        G[size,size] = innerProduct(vec1, vec1, matrix)
 
         # Use the fact that Grammian is symmetric
-        for i in range(G.shape[0] - 1):
-            vec2 = sm.dataGeneration(schedule, set[:,i], pulsars)
-            G[ i, -1] = innerProduct(vec1, vec2, matrix)
-            G[ -1, i] = G[i,-1]
+        for i in xrange(size):
 
+            # Construct a parameter vector
+            params2 = np.zeros(paramSize)
+            for j in xrange(paramSize):
+                params2[j] = set[j,size]
+
+            vec2 = sm.dataGeneration(schedule, params2, pulsars)
+            G[i][size] = innerProduct(vec1, vec2, matrix)
+            G[size][i] = G[i][size]
+
+    print("Done")
+    # Calculate the inverse of a matrix
     G_inv = np.linalg.inv(G)
 
     return G, G_inv
 
-def ID2param (int idx, np.ndarray[double] space, np.ndarray[int] dim):
+def ID2param (int idx, np.ndarray[double] space, np.ndarray[long] dim):
     # Initialize a return container
     cdef np.ndarray r = np.zeros(dim.shape[0])
     cdef int n, i
 
     # Construct the test vector of the parameters
-    for i in range(r.shape[0]):
+    for i in xrange(r.shape[0]):
         n = dim[0:i].sum() + idx % dim[i]
         r[i] = space[n]
         idx = idx // dim[i]
