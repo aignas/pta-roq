@@ -17,7 +17,7 @@ week = 7*24*3600
 yr = 52 * week
 
 # Stop the generation here
-t_final = 5*yr
+t_final = 15*yr
 # Interval when we do not take any measurements
 dt_min = 2 * week
 dt_max = 2 * week
@@ -49,6 +49,6 @@ data = sm.dataGeneration(schedule, sources, pulsars)
 
 # Save the data in a gz format. Numpy load txt understands gzipped files
 # transparently
-print("Save the generated data and the schedule")
-np.savetxt("pulsardata.txt.gz", data)
-np.savetxt("pulsarschedule.txt.gz", schedule)
+#print("Save the generated data and the schedule")
+#np.savetxt("pulsardata.txt.gz", data)
+#np.savetxt("pulsarschedule.txt.gz", schedule)
