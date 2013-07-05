@@ -211,11 +211,14 @@ def innerProduct (np.ndarray vec1, np.ndarray vec2, np.ndarray matrix):
     should match.
     """
     # Initialise the return value
-    cdef double r
+    cdef double r = 0
+    cdef int i, j
 
     if matrix.shape[0] == vec2.shape[0] and matrix.shape[1] == vec1.shape[0]:
         # Do a vector multiplication (this method should not use too much memory)
-        r = np.dot(vec1, np.dot(matrix, vec2))
+        for i in xrange(vec1.shape[0]):
+            for j in xrange(vec2.shape[0]):
+                r += vec1[i] * matrix[i,j] * vec2[j]
 
     else:
         print("Error!!! The inner product is not working because of the missmatch of dimensions")

@@ -9,7 +9,7 @@ import numpy as np
 
 # I generate N pulsars in the solid angle defined by \theta and \phi randomly
 # scattered accross some length
-N = 6
+N = 2
 PulsarCoordinateRanges = np.array([ [10,40],[0, np.pi],[-np.pi, np.pi]])
 pulsarNoise = np.array([0.003, 0, 0])
 
