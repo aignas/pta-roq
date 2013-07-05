@@ -1,36 +1,28 @@
 #include <vector>
+#include <valarray>
 #include <cmath>
 
-#include "pulsar.hh"
-#include "signal-sampling.hh"
-#include "signal-model.hh"
 #include "linalg.hh"
+#include "pulsar.hh"
+#include "signal-model.hh"
+#include "signal-sampling.hh"
 
-// Define PI to a high precision
-const static double M_PI = 3.141592653589793238462643383279502884;
-
-std::vector<double> generateSample (PulsarGrid pulsars, std::vector<std::vector<double> > sources) {
-    double t, L;
-    std::vector<double> u_p, noise, res, Times;
-    unsigned int N = pulsars.getNumber();
-
+void generateSample (std::vector<double>& out, std::vector<Pulsar> &pulsars,
+                     std::vector<std::vector<double> > &sources) { 
+    std::vector<double> Times;
+    Pulsar pulsar;
+    const unsigned int N = pulsars.size();
+    unsigned int Nt;
 
     // Start collecting the data
     for (unsigned int i = 0; i < N; i++) {
-        Times = pulsars.getSchedule(i);
-        for (unsigned int j = 0; j < Times.size(); j++) {
-            L = pulsars.getDistance(i);
-            u_p = pulsars.getUnitVector(i);
-            t = Times[j];
-
-            Pulsar pulsarProps = pulsars.getPulsarProperties(i);
-
-            res.push_back(residual(t, N, sources, pulsarProps));
+        pulsar = pulsars[i];
+        Times = pulsars[i].getSchedule();
+        Nt = Times.size();
+        for (unsigned int j = 0; j < Nt; j++) {
+            out.push_back(residual(Times[j], N, sources, pulsar));
         }
     }
-
-    return res;
-
 }
 
 // Calculate red noise Lorentzian terms (i.e. red noise)
@@ -49,7 +41,7 @@ double covarianceMatrixMemberLor (unsigned int i, unsigned int j, unsigned int a
 
 // Calculate the power law spectral noise
 double covarianceMatrixMemberPowLaw (unsigned int i, unsigned int j, unsigned int a, unsigned int b, 
-        double A, double f, double tau, double gamma, unsigned int N){
+        double A, double f, double tau, double gamma, unsigned int N) {
     
     double r = 0;
 
@@ -65,7 +57,7 @@ double covarianceMatrixMemberPowLaw (unsigned int i, unsigned int j, unsigned in
         }
 
         r =  A * A / pow(f, gamma - 1) \
-             * (tgamma(1 - gamma) * sin(M_PI * gamma /2) * pow(f * tau, gamma - 1) - sum);
+             * (tgamma(1 - gamma) * sin(_M_PI * gamma /2) * pow(f * tau, gamma - 1) - sum);
     }
     
     // Return the computed value
@@ -95,14 +87,14 @@ double covarianceMatrixMemberGWB (unsigned int i, unsigned int j, unsigned int a
         sum += sum_member;
     }
 
-    return A * A * alpha / (pow(2 * M_PI, 2) * pow(f, 1 + gamma)) \
-           / (tgamma(-1 - gamma) * sin(-M_PI * gamma / 2) * pow(f * tau, 1 + gamma) - sum);
+    return A * A * alpha / (pow(2 * _M_PI, 2) * pow(f, 1 + gamma)) \
+           / (tgamma(-1 - gamma) * sin(-_M_PI * gamma / 2) * pow(f * tau, 1 + gamma) - sum);
 }
 
-std::valarray<double>* covarianceMatrix (std::vector<Pulsar> pulsars, 
+void covarianceMatrix (std::valarray<double> &matrix, std::vector<Pulsar> pulsars, 
         bool WhiteNoise, bool RedNoise, bool PowerLaw, bool GWB) {
 
-    unsigned int N = 0, Nt;
+    unsigned int N = 0;
     std::vector<double> timestamps;
     for (unsigned int i = 0; i < pulsars.size(); i++) {
         timestamps.push_back(pulsars[i].getSchedule().size());
@@ -110,7 +102,7 @@ std::valarray<double>* covarianceMatrix (std::vector<Pulsar> pulsars,
     }
 
     // Initiate a zero matrix
-    std::valarray<double> matrix (N*N);
+    matrix.resize(N*N);
 
     // Set the low frequency cutoff by dividing frequency error by the time of the
     // measurement
@@ -119,7 +111,7 @@ std::valarray<double>* covarianceMatrix (std::vector<Pulsar> pulsars,
     // Initiate the sum truncation in GWB and Power Law Noise terms
     unsigned int NTrunk = 10000;
 
-    if WhiteNoise {
+    if (WhiteNoise) {
         // Pulsar id
         unsigned int pidx = 0, j=0;
         double amplitude = pow(pulsars[pidx].getWhiteNoise(), 2);
@@ -134,26 +126,25 @@ std::valarray<double>* covarianceMatrix (std::vector<Pulsar> pulsars,
             }
 
             // Fill only the diagonal entries
-            matrix( i * (N+1) ) = amplitude;
+            matrix[ i * (N+1) ] = amplitude;
         }
     }
 
-    if RedNoise {
+    if (RedNoise) {
     }
 
-    if PowerLawNoise {
+    if (PowerLaw) {
     }
 
-    if GWB {
+    if (GWB) {
         // Assume that the noise comes from SMBHBs only
         double gamma = 7./3;
 
         // Let the GWB amplitude be small
-        double A_GWB = 1e-15,
-               a, b, tau, C;
+        double A_GWB = 1e-15, tau, C;
+        std::vector<double> uPV1 (3), uPV2 (3);
 
         unsigned int a = 0, b = 0, k = 0, l = 0;
-        double amplitude = pow(pulsars[pidx].getWhiteNoise(), 2);
         for (unsigned int i = 0; i < N; i++) {
             // Keep track of the pulsar index with comparing the secondary counter with
             // the number of timestamps for that pulsar. This is very similar to what I
@@ -165,27 +156,26 @@ std::valarray<double>* covarianceMatrix (std::vector<Pulsar> pulsars,
             }
 
             for (unsigned int j = 0; j < N; j++) {
-                if (timestamps[pidx] == j) {
+                if (timestamps[b] == j) {
                     b++; l = 0;
                 } else {
                     l++;
                 }
                 // Calculate the difference in times
-                tau = 2 * M_PI * (pulsars[a].getSchedule()[k] - pulsars[b].getSchedule()[l]);
+                tau = 2 * _M_PI * (pulsars[a].getSchedule()[k] - pulsars[b].getSchedule()[l]);
 
                 // From the pulsars we need only the unit vectors and the noise
                 // magnitude, we could probably do it here, as it would make the code
                 // look better
-                C = 1./2 * (1 - dotProduct( pulsars[a].getUnitVector(), pulsars[b].getUnitVector()))
+                uPV1 = pulsars[a].getUnitVector();
+                uPV2 = pulsars[b].getUnitVector();
+                C = 1./2 * (1 - dotProduct( uPV1, uPV2 ));
 
                 // Fill only the diagonal entries
-                matrix( i*j ) = covarianceMatrixMemberGWB (i, j, a, b, A_GWB, f_L, gamma, tau, NTrunk, C);
+                matrix[ i*j ] = covarianceMatrixMemberGWB (i, j, a, b, A_GWB, f_L, gamma, tau, NTrunk, C);
 
             }
         }
     }
-
-    // Return by reference, otherwise, we will have lots of copying
-    return &matrix;
 }
 

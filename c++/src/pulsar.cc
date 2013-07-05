@@ -1,11 +1,14 @@
 #include <vector>
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>
+#include <cmath>
 
 #include "pulsar.hh"
+#include "random-helper.hh"
 
-double random_simple (double LO, double HI) {
-    return LO + (double)rand()/((double)RAND_MAX/(HI-LO));
+Pulsar::Pulsar () {
+        mDistance = 0;
+        mTheta = 0;
+        mPhi = 0;
+        mWhiteNoise = 0;
 }
 
 void Pulsar::setRedNoise (double N, double f) {
@@ -20,30 +23,41 @@ void Pulsar::setPowerLawNoise (double N, double gamma) {
     mPowerLawNoise[1] = gamma;
 }
 
-namespace PulsarGrid {
-    void randomizeData (std::vector<Pulsar> &Grid, unsigned int N, dvec range, double wnoise) {
-        // Seed the random number generator
-        srand (time(NULL));
+std::vector<double> Pulsar::getUnitVector () {
+    std::vector<double> v (3, 0);
 
-        // Set the size of the containers
-        Grid.resize(N);
+    v[0] = sin(mTheta);
+    v[1] = v[0];
+    v[2] = cos(mTheta);
+    v[0] *= cos(mPhi);
+    v[1] *= sin(mPhi);
 
-        for (int i = 0; i < N; i++) {
+    return v;
+}
+
+namespace pulsarGrid {
+    void randomizeData (std::vector<Pulsar>& Grid, unsigned int N, dvec range, double wnoise) {
+        for (unsigned int i = 0; i < N; i++) {
+            Pulsar tmp;
+
             // Randomize angles in some range
-            Grid[i].setAngles(random_simple(range[2], range[3]),  // random \theta
-                              random_simple(range[4], range[5])); // random \phi
+            tmp.setAngles(random_uniform(range[2], range[3]),  // random \theta
+                          random_uniform(range[4], range[5])); // random \phi
 
             // As well as the distance
-            Grid[i].setDistance(random_simple(range[0], range[1]));
+            tmp.setDistance(random_uniform(range[0], range[1]));
 
             // Randomize the noise values, such that all pulsars have different noises.
-            Grid[i].setWhiteNoise(random_simple(0,wnoise));
+            tmp.setWhiteNoise(random_uniform(0,wnoise));
+
+            Grid.push_back(tmp);
         }
+
+        random_uniform_free();
     }
 
     void generateSchedule (std::vector<Pulsar> &Grid, std::vector<double> initialTimes, double tFinal, double tMin, double tMax) {
-        bool collectData = true;
-        int N = initialTimes.size();
+        unsigned int N = initialTimes.size();
         std::vector<double> Times;
 
         // Copy the structure of the array for the time log
@@ -53,18 +67,20 @@ namespace PulsarGrid {
         for (unsigned int i = 0; i < N; i++) {
 
             // Reset the time
-            double t = initialTimes[i];
+            double t = initialTimes.at(i);
 
             // Generate a time series
             while (t < tFinal) {
                 Times.push_back(t);
 
                 // Advance in time
-                t += random_simple(tMin, tMax);
+                t += random_uniform(tMin, tMax);
             }
 
             Grid[i].setSchedule(Times);
         }
+
+        random_uniform_free();
     }
 }
 
