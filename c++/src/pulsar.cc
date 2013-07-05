@@ -56,9 +56,11 @@ namespace pulsarGrid {
         random_uniform_free();
     }
 
-    void generateSchedule (std::vector<Pulsar> &Grid, std::vector<double> initialTimes, double tFinal, double tMin, double tMax) {
+    void generateSchedule ( std::vector<double>& initialTimes, 
+                           double tFinal, double tMin, double tMax,
+                           std::vector<unsigned short>& indices,
+                           std::vector<double>& Times ) {
         unsigned int N = initialTimes.size();
-        std::vector<double> Times;
 
         // Copy the structure of the array for the time log
         std::vector<std::vector<double> > dates (N);
@@ -72,12 +74,11 @@ namespace pulsarGrid {
             // Generate a time series
             while (t < tFinal) {
                 Times.push_back(t);
+                indices.push_back(i);
 
                 // Advance in time
                 t += random_uniform(tMin, tMax);
             }
-
-            Grid[i].setSchedule(Times);
         }
 
         random_uniform_free();

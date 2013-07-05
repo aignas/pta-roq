@@ -21,7 +21,9 @@ int main() {
                  t_final = 15 * year,
                  dt_min = 2 * week,
                  dt_max = 2 * week;
-    std::vector<double> t_init (pulsarNumber, 0);
+    std::vector<double> t_init (pulsarNumber, 0),
+                        Times;
+    std::vector<unsigned short> indices;
 
     std::vector<Pulsar> pulsars;
 
@@ -29,7 +31,7 @@ int main() {
     std::cout << "Randomizing the initial conditions" << std::endl;
     pulsarGrid::randomizeData (pulsars, pulsarNumber, range, 0.00005);
     std::cout << "Randomizing the initial conditions" << std::endl;
-    pulsarGrid::generateSchedule (pulsars, t_init, t_final, dt_min, dt_max);
+    pulsarGrid::generateSchedule (t_init, t_final, dt_min, dt_max, indices, Times);
 
     // Add a single source
     std::vector<std::vector<double> > sources (1);
@@ -46,7 +48,7 @@ int main() {
     // Generate a residual vector
     std::cout << "Generating a residual vector" << std::endl;
     std::vector<double> r;
-    generateSample (r, pulsars, sources);
+    generateSample (r, pulsars, indices, Times, sources);
 
     // Output the stuff
     // FIXME

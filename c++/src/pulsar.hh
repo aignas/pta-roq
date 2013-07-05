@@ -63,13 +63,6 @@ class Pulsar {
          */
         void setPowerLawNoise (double N, double gamma);
 
-        /**
-         * Set the schedule
-         *
-         * @param t An array containing all the time stamps
-         */
-        void setSchedule (dvec t) { mTimes = t; }
-
         // Getters
         /**
          * Get a White noise amplitude
@@ -95,11 +88,6 @@ class Pulsar {
          * Get a unit vector for the pulsar
          */
         dvec getUnitVector ();
-
-        /**
-         * Get the schedule
-         */
-        dvec getSchedule () { return mTimes; }
 };
 
 #endif
@@ -124,6 +112,11 @@ namespace pulsarGrid {
      * @param tFinal Finishing time
      * @param tMin A minimum time break between 2 samples.
      * @param tMax A maximum time break between 2 samples.
+     * @param indices_out The output array for the indices.
+     * @param Times_out The output array for the time schedule.
      */
-    void generateSchedule (std::vector<Pulsar> &Grid, std::vector<double> initialTimes, double tFinal, double tMin, double tMax);
+    void generateSchedule (std::vector<double>& initialTimes, 
+                           double tFinal, double tMin, double tMax,
+                           std::vector<unsigned short>& indices_out, 
+                           std::vector<double>& Times_out);
 }
