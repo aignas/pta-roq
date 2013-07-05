@@ -1,0 +1,5 @@
+*.so
+*.o
+lib_test
+data_gen
+rb_gen
