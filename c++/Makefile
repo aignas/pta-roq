@@ -1,12 +1,13 @@
 MAKEDIR_P = mkdir -p
 
-TARGET = program
-LIBS = -lgsl -lgslcblas
+TARGET = data_generator
+LIBS = -L /usr/lib64/atlas -lcblaskk
 CC = g++
-CFLAGS = -g -pedantic -Wall -O2
+CFLAGS = -g -pedantic -Wall -O3
 SRCDIR = src
 OBJDIR = obj
-RUNDIR = data_raw/exp1 data_raw/exp2 data_raw/exp3 data_raw/exp4
+TESTDIR = test
+RUNDIR = 
 
 .PHONY: default all clean
 
@@ -14,10 +15,14 @@ default: $(OBJDIR) $(TARGET)
 all: clean default
 runall: default
 
-# Automatically include all cc files in the src directory
-HEADERS  := $(wildcard $(SRCDIR)/*.hh) $(wildcard $(TESTDIR)/*.hh)
-CC_FILES := $(wildcard $(SRCDIR)/*.cc) $(wildcard $(TESTDIR)/*.cc)
-OBJECTS  := $(patsubst $(SRCDIR)/%.cc, $(OBJDIR)/%.o, $(CC_FILES)) \
+# Manually write down the headers and the main program files
+SCR_HH  := linalg.hh pulsar.hh signal-model.hh signal-vectors.hh
+SCR_CC  := $(patsubst %.hh, %.cc, $(SCR_HH))
+TEST_HH := test-linalg.hh test-pulsar.hh test-signal-model.hh test-signal-vectors.hh
+TEST_CC := $(patsubst %.hh, %.cc, $(TEST_HH)) test_runner.cc
+
+OBJECTS := $(patsubst %.cc, $(OBJDIR)/%.o, $(SCR_CC)) \
+           $(patsubst %.cc, $(OBJDIR)/%.o, $(TEST_CC))
 
 $(OBJECTS): | $(OBJDIR)
 
@@ -35,19 +40,6 @@ $(RUNDIR):
 $(OBJDIR)/%.o: $(SRCDIR)/%.cc $(HEADERS)
 	@echo Building $@
 	@$(CC) -c $(CFLAGS) $< -o $@
-
-plotall:
-	plot/./elliptic-orbits.py
-	./plot/plot-exp-parabolic-test.py
-	./plot/plot-exp-parabolic.py
-	./plot/plot-exp-test.py
-	./plot/plot-exp-testpart.py
-
-runall:
-	./$(TARGET) run 1
-	./$(TARGET) run 2
-	./$(TARGET) run 3
-	./$(TARGET) run 4
 
 test: default
 	./$(TARGET) test
