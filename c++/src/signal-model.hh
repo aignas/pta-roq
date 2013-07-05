@@ -1,7 +1,7 @@
 #include <vector>
 // FIXME: Do I need this? because at the moment the pulsar grid is not used in this file
 // and might never be used
-#include <pulsar.hh>
+#include "pulsar.hh"
 
 typedef std::vector<double> dvec
 
@@ -9,10 +9,10 @@ typedef std::vector<double> dvec
  * Antenna patterns for different pulsars, which define how sensitive is Earth to the
  * pulsar oscillations
  *
- * @param intrinsic Intrinsic parameters of the GW source
+ * @param extrinsic Intrinsic parameters of the GW source
  * @param pulsarUnitVector The unit vector into the direction of the pulsar
  */
-dvec antennaPattern (dvec intrinsic, dvec pulsarUnitVector);
+dvec antennaPattern (dvec extrinsic, dvec pulsarUnitVector);
 
 /**
  * Frequency evolution of the GW source
@@ -21,7 +21,7 @@ dvec antennaPattern (dvec intrinsic, dvec pulsarUnitVector);
  * @param omega0 The initial frequency (at t=0)
  * @param M The chirp mass of the GW source
  */
-double omegaReduced(double t, double omega0, double M);
+double omegaReduced(double omega0);
 
 /**
  * Phase evolution of the GW source raised to the power of -1/3. This is just a
@@ -31,7 +31,7 @@ double omegaReduced(double t, double omega0, double M);
  * @param omega0 The initial frequency (at t=0)
  * @param M The chirp mass of the GW source
  */
-double Phi(double, double, double);
+double Phi(double t, double omega0);
 
 /**
  * Gravitational Wave Contribution to the residual:
@@ -98,4 +98,4 @@ double individualSource (double t, dvec intrinsic, dvec extrinsic, double L, dve
  *        assumed, that they are put in rows of a matrix (a vector of a vector).
  * @param pulsarProperties The coordinates and the noise properties of the pulsar
  */
-double residual (double t, unsigned int N, std::vector<dvec> sources, dvec pulsarProperties);
+double residual (double t, unsigned int N, std::vector<dvec> sources, Pulsar pulsarProperties);
