@@ -16,7 +16,7 @@ typedef std::valarray<double> darray;
  * @param x A vector of doubles
  * @param y A vector of doubles
  */
-double dotProduct (dvec x, dvec y);
+double dotProduct (dvec& x, dvec& y);
 
 /**
  * A generalised inner product of 2 vectors of same dimensionality n, which are
@@ -28,7 +28,7 @@ double dotProduct (dvec x, dvec y);
  * @param matrix a metrix of the same dimensionality as the vectors
  * @param y A vector of doubles
  */
-double innerProduct (dvec x, darray A, dvec y);
+double innerProduct (dvec& x, darray& A, dvec& y);
 
 /**
  * Construct a grammian
@@ -36,7 +36,7 @@ double innerProduct (dvec x, darray A, dvec y);
  * @param set A set of basis vectors
  * @param A A matrix to evaluate the inner product with
  */
-darray constructGrammian (std::vector<dvec> set, darray A);
+darray constructGrammian (std::vector<dvec>& set, darray& A);
 
 /**
  * Project a vector onto basis vectors
@@ -46,7 +46,7 @@ darray constructGrammian (std::vector<dvec> set, darray A);
  * @param A The matrix for the inner product
  * @param G The Grammian matrix for orthogonalization of the set
  */
-dvec projectionIntoSet (dvec projectee, std::vector<dvec> set, darray A, darray G);
+dvec projectionIntoSet (dvec& projectee, std::vector<dvec>& set, darray& A, darray& G);
 
 /**
  * Norm of a vector
@@ -54,4 +54,4 @@ dvec projectionIntoSet (dvec projectee, std::vector<dvec> set, darray A, darray 
  * @param x A vector to norm
  * @param A A matrix to norm it
  */
-inline double norm (dvec x, darray A);
+inline double norm (dvec& x, darray& A);

@@ -9,7 +9,7 @@ extern "C" {
 // Local linear algebra routines to abstract things
 #include "linalg.hh"
 
-double dotProduct (dvec x, dvec y) {
+double dotProduct (dvec& x, dvec& y) {
     double r;
     if (x.size() == y.size()) {
         r = cblas_ddot(x.size(), &x[0], 1, &y[0], 1);
@@ -20,13 +20,12 @@ double dotProduct (dvec x, dvec y) {
     return r;
 }
 
-double innerProduct(dvec x, darray A, dvec y) {
+double innerProduct(dvec& x, darray& A, dvec& y) {
     double r;
 
     // Fix it
     if (x.size() == y.size() and x.size()*y.size() == A.size()) {
-        std::vector<double> tmp;
-        tmp.resize(x.size());
+        std::vector<double> tmp (x.size(), 0);
         cblas_dgemv(CblasRowMajor, CblasNoTrans, x.size(), x.size(), 1, &A[0], 1, &y[0], 1, 1, &tmp[0], 1);
         r = cblas_ddot(x.size(), &x[0], 1, &tmp[0], 1);
     } else {
@@ -36,8 +35,8 @@ double innerProduct(dvec x, darray A, dvec y) {
     return r;
 }
 
-darray constructGrammian (std::vector<dvec> set, darray A) {
-    int N = set.size();
+darray constructGrammian (std::vector<dvec>& set, darray& A) {
+    unsigned int N = set.size();
 
     std::valarray<double> G (N*N);
 
@@ -55,7 +54,7 @@ darray constructGrammian (std::vector<dvec> set, darray A) {
     return G;
 }
 
-dvec projectionIntoSet (dvec projectee, std::vector<dvec> set, darray A, darray G) {
+dvec projectionIntoSet (dvec& projectee, std::vector<dvec>& set, darray& A, darray& G) {
     unsigned int N = set.size();
     std::vector<double> tmp (projectee.size(), 0);
     double c_i;
@@ -71,6 +70,6 @@ dvec projectionIntoSet (dvec projectee, std::vector<dvec> set, darray A, darray 
     return tmp;
 }
 
-inline double norm (dvec x, darray A) {
+inline double norm (dvec& x, darray& A) {
     return innerProduct(x, A, x);
 }
