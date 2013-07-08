@@ -13,10 +13,84 @@ void generateSample (std::vector<double>& out, std::vector<Pulsar> &pulsars,
     Pulsar pulsar;
     const unsigned int N = indices.size();
 
+    if (out.size() != N) {
+        out.resize(N);
+    }
+
     // Start collecting the data
     for (unsigned int i = 0; i < N; i++) {
-        out.push_back(residual(Times[i], indices[i], sources, pulsar));
+        out[i] = residual(Times[i], indices[i], sources, pulsar);
     }
+}
+
+void genCovarianceMatrix (std::vector<double> & matrix, std::vector<Pulsar> & pulsars,
+                          std::vector<unsigned short> & indices, std::vector<double> & Times,
+                          const bool WhiteNoise, const bool RedNoise, const bool PowerLaw, const bool GWB) {
+    unsigned int N = indices.size();
+
+    // Initiate a zero matrix
+    matrix.resize(N*N);
+
+    // Set the low frequency cutoff by dividing frequency error by the time of the
+    // measurement
+    double f_L = 1e-5 / Times.back();
+
+    // Initiate the sum truncation in GWB and Power Law Noise terms
+    unsigned int NTrunk = 10000;
+
+    if (WhiteNoise) {
+        unsigned int pidx = 0;
+        double amplitude = pow(pulsars[pidx].getWhiteNoise(), 2);
+        for (unsigned int i = 0; i < N; i++) {
+            if ( pidx != indices[i]) {
+                pidx = indices[i];
+                amplitude = pow(pulsars[pidx].getWhiteNoise(), 2);
+            }
+
+            // Fill only the diagonal entries
+            matrix[ i * (N+1) ] = amplitude;
+        }
+    }
+
+    if (RedNoise) {
+    }
+
+    if (PowerLaw) {
+    }
+
+    if (GWB) {
+        // Assume that the noise comes from SMBHBs only
+        double gamma = 7./3;
+
+        // Let the GWB amplitude be small
+        double A_GWB = 1e-15, tau, C;
+        std::vector<double> uPV1 (3), uPV2 (3);
+
+        unsigned int a = 0, b = 0;
+        for (unsigned int i = 0; i < N; i++) {
+            for (unsigned int j = 0; j < N; j++) {
+                a = indices[i];
+                b = indices[j];
+
+                // Calculate the difference in times
+                tau = 2 * _M_PI * ( Times[i] - Times[j] );
+
+                // From the pulsars we need only the unit vectors and the noise
+                // magnitude, we could probably do it here, as it would make the code
+                // look better
+                uPV1 = pulsars[a].getUnitVector();
+                uPV2 = pulsars[b].getUnitVector();
+                C = 1./2 * (1 - dotProduct( uPV1, uPV2 ));
+
+                // Fill only the diagonal entries
+                matrix[ i*j ] = covarianceMatrixMemberGWB (i, j, a, b, A_GWB, f_L, gamma, tau, NTrunk, C);
+
+            }
+        }
+    }
+
+    // Invert the matrix, as we do not need the other bit
+    inverse(matrix);
 }
 
 // Calculate red noise Lorentzian terms (i.e. red noise)
@@ -84,72 +158,3 @@ double covarianceMatrixMemberGWB (unsigned int i, unsigned int j, unsigned int a
     return A * A * alpha / (pow(2 * _M_PI, 2) * pow(f, 1 + gamma)) \
            / (tgamma(-1 - gamma) * sin(-_M_PI * gamma / 2) * pow(f * tau, 1 + gamma) - sum);
 }
-
-void covarianceMatrix (std::valarray<double> &matrix, std::vector<Pulsar> pulsars,
-                       std::vector<unsigned short> indices, std::vector<double> Times,
-                       bool WhiteNoise, bool RedNoise, bool PowerLaw, bool GWB) {
-
-    unsigned int N = indices.size();
-
-    // Initiate a zero matrix
-    matrix.resize(N*N);
-
-    // Set the low frequency cutoff by dividing frequency error by the time of the
-    // measurement
-    double f_L = 1e-5 / Times.back();
-
-    // Initiate the sum truncation in GWB and Power Law Noise terms
-    unsigned int NTrunk = 10000;
-
-    if (WhiteNoise) {
-        unsigned int pidx = 0;
-        double amplitude = pow(pulsars[pidx].getWhiteNoise(), 2);
-        for (unsigned int i = 0; i < N; i++) {
-            if ( pidx != indices[i]) {
-                pidx = indices[i];
-                amplitude = pow(pulsars[pidx].getWhiteNoise(), 2);
-            }
-
-            // Fill only the diagonal entries
-            matrix[ i * (N+1) ] = amplitude;
-        }
-    }
-
-    if (RedNoise) {
-    }
-
-    if (PowerLaw) {
-    }
-
-    if (GWB) {
-        // Assume that the noise comes from SMBHBs only
-        double gamma = 7./3;
-
-        // Let the GWB amplitude be small
-        double A_GWB = 1e-15, tau, C;
-        std::vector<double> uPV1 (3), uPV2 (3);
-
-        unsigned int a = 0, b = 0;
-        for (unsigned int i = 0; i < N; i++) {
-            for (unsigned int j = 0; j < N; j++) {
-                a = indices[i];
-                b = indices[j];
-
-                // Calculate the difference in times
-                tau = 2 * _M_PI * ( Times[i] - Times[j] );
-
-                // From the pulsars we need only the unit vectors and the noise
-                // magnitude, we could probably do it here, as it would make the code
-                // look better
-                uPV1 = pulsars[a].getUnitVector();
-                uPV2 = pulsars[b].getUnitVector();
-                C = 1./2 * (1 - dotProduct( uPV1, uPV2 ));
-
-                // Fill only the diagonal entries
-                matrix[ i*j ] = covarianceMatrixMemberGWB (i, j, a, b, A_GWB, f_L, gamma, tau, NTrunk, C);
-
-            }
-        }
-    }
-}
-

@@ -22,9 +22,9 @@ const double _M_PI = 3.141592653589793238462643383279502884;
  * @param Times The time series
  * @param sources A list of sources
  */
-void generateSample (std::vector<double>& out, std::vector<Pulsar> &pulsars, 
-                     std::vector<unsigned short>& indices, std::vector<double>& Times,
-                     std::vector<std::vector<double> > &sources);
+void generateSample (std::vector<double> & out, std::vector<Pulsar> & pulsars, 
+                     std::vector<unsigned short> & indices, std::vector<double> & Times,
+                     std::vector<std::vector<double> > & sources);
 
 /**
  * Generate a covariance matrix, which depends on the sampling parameters (i.e. the
@@ -37,5 +37,54 @@ void generateSample (std::vector<double>& out, std::vector<Pulsar> &pulsars,
  * @param PowerLaw If true, then power law noise contributions will be added.
  * @param GWB If true, then GWB contributions will be added.
  */
-void covarianceMatrix (std::valarray<double> &matrix_out, std::vector<Pulsar> pulsars, 
-        bool WhiteNoise = true, bool RedNoise = true, bool PowerLaw = true, bool GWB = true);
+void genCovarianceMatrix (std::vector<double> &matrix, std::vector<Pulsar> & pulsars,
+                          std::vector<unsigned short> & indices, std::vector<double> & Times,
+                          const bool WhiteNoise, const bool RedNoise, const bool PowerLaw, const bool GWB); 
+
+/**
+ * Calculate the GWB terms in the covariance matrix members.
+ *
+ * @param i measurement index
+ * @param j measurement index
+ * @param a pulsar index
+ * @param b pulsar index
+ * @param A GWB amplitude
+ * @param f cutoff frequency
+ * @param gamma Some statistical coefficient describing the population of the sources of
+ *    GWB
+ * @param tau characteristic time
+ * @param N The number of terms in the sum
+ * @param C some numerical factor, which is needed in the formula
+ */
+double covarianceMatrixMemberGWB (unsigned int i, unsigned int j, unsigned int a, unsigned int b, 
+        double A, double f, double gamma, double tau, unsigned int N, double C);
+
+/**
+ * Calculate the power law spectral noise
+ *
+ * @param i measurement index
+ * @param j measurement index
+ * @param a pulsar index
+ * @param b pulsar index
+ * @param A Power Law noise amplitude
+ * @param f cutoff frequency
+ * @param tau characteristic time
+ * @param gamma Some statistical coefficient describing the power law noise
+ * @param N The number of terms in the sum
+ */
+double covarianceMatrixMemberPowLaw (unsigned int i, unsigned int j, unsigned int a, unsigned int b, 
+        double A, double f, double tau, double gamma, unsigned int N);
+
+/**
+ * Calculate red noise Lorentzian terms (i.e. red noise)
+ *
+ * @param i measurement index
+ * @param j measurement index
+ * @param a pulsar index
+ * @param b pulsar index
+ * @param N Red noise amplitude
+ * @param f characteristic frequency
+ * @param tau characteristic time
+ */
+double covarianceMatrixMemberLor (unsigned int i, unsigned int j, unsigned int a, unsigned int b, 
+        double N, double f, double tau);
