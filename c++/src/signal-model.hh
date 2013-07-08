@@ -12,7 +12,7 @@ typedef std::vector<double> dvec;
  * @param extrinsic Intrinsic parameters of the GW source
  * @param pulsarUnitVector The unit vector into the direction of the pulsar
  */
-dvec antennaPattern (dvec& extrinsic, dvec& pulsarUnitVector);
+dvec antennaPattern (dvec& intrinsic, dvec& pulsarUnitVector);
 
 /**
  * Frequency evolution of the GW source
@@ -40,7 +40,7 @@ inline double Phi(const double t, const double omega0);
  * @param intrinsic Intrinsic parameters of the GW source
  * @param omega The frequency of the source
  */
-std::vector<double> gravWaveContrib (const double t, dvec& intrinsic, const double omega);
+std::vector<double> gravWaveContrib (const double t, dvec& extrinsic, const double omega);
 
 /**
  * Amplitude of the wave
@@ -56,7 +56,7 @@ dvec amplitude (dvec& intrinsic);
  * @param extrinsic The extrinsic parameters of the source
  * @param pulsarUnitVector The unit vector into the direction of the pulsar
  */
-dvec basis (const double t, dvec& extrinsic, dvec& pulsarUnitVector);
+dvec basis (const double t, dvec& intrinsic, dvec& pulsarUnitVector);
 
 /**
  * The pulsar term for the residual
@@ -66,7 +66,7 @@ dvec basis (const double t, dvec& extrinsic, dvec& pulsarUnitVector);
  * @param extrinsic The extrinsic parameters of the source
  * @param pulsarCoords The polar coordinates of a pulsar
  */
-double pulsarTerm (const double t, dvec& intrinsic, dvec& extrinsic, dvec& pulsarCoords);
+double pulsarTerm (const double t, dvec& extrinsic, dvec& intrinsic, dvec& pulsarCoords);
 
 /**
  * Noise function
@@ -82,12 +82,11 @@ double noise (const double t, const double whiteNoise, dvec& redNoise, dvec& pow
  * The signal for one source excluding noise
  *
  * @param t Time when the residual is evaluated
- * @param intrinsic Intrinsic parameters of the GW source
- * @param extrinsic The extrinsic parameters of the source
+ * @param params extrinsic and intrinsic vars in one array
  * @param L The distance to some selected pulsar
  * @param pulsarUnitVector The unit vector into the direction of the pulsar
  */
-double individualSource (const double t, dvec& intrinsic, dvec& extrinsic, const double L, dvec& pulsarUnitVector);
+double individualSource (const double t, dvec& params, const double L, dvec& pulsarUnitVector);
 
 /**
  * The residual for all the sources

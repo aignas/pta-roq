@@ -47,13 +47,13 @@ inline double Phi(const double t, const double omega0) {
     return pow(omegaReduced (omega0), -3) * t;
 }
 
-std::vector<double> gravWaveContrib (const double t, dvec& i, const double omega0) {
+std::vector<double> gravWaveContrib (const double t, dvec& e, const double omega0) {
     // Assign the intrinsic parameters to the names
-    double M    = i.at(0),
-           D    = i.at(1),
-           iota = i.at(2),
-           Phi0 = i.at(3),
-           psi  = i.at(4);
+    double M    = e.at(0),
+           D    = e.at(1),
+           iota = e.at(2),
+           Phi0 = e.at(3),
+           psi  = e.at(4);
 
     // Create some temp vars
     double zeta = M/D;
@@ -68,12 +68,12 @@ std::vector<double> gravWaveContrib (const double t, dvec& i, const double omega
     return gw;
 }
 
-dvec amplitude (dvec& i) {
+dvec amplitude (dvec& e) {
     // Assign the intrinsic parameters to the names
-    double zeta = i.at(0) / i.at(1),
-           iota = i.at(2),
-           Phi0 = i.at(3),
-           psi  = i.at(4);
+    double zeta = e.at(0) / e.at(1),
+           iota = e.at(2),
+           Phi0 = e.at(3),
+           psi  = e.at(4);
 
     // Assign some temp variables:
     double c = cos(iota);
@@ -89,11 +89,11 @@ dvec amplitude (dvec& i) {
     return a;
 }
 
-dvec basis (const double t, dvec& extrinsic, dvec& u_p) {
-    // Assign the extrinsic parameters to the names
-    double omega0 = extrinsic.at(2);
+dvec basis (const double t, dvec& intrinsic, dvec& u_p) {
+    // Assign the intrinsic parameters to the names
+    double omega0 = intrinsic.at(2);
 
-    dvec A, F = antennaPattern (extrinsic, u_p);
+    dvec A, F = antennaPattern (intrinsic, u_p);
 
     A.push_back(F.at(0) * omegaReduced(omega0) * sin (2 * Phi(t, omega0)));
     A.push_back(F.at(0) * omegaReduced(omega0) * cos (2 * Phi(t, omega0)));
@@ -103,11 +103,11 @@ dvec basis (const double t, dvec& extrinsic, dvec& u_p) {
     return A;
 }
 
-double pulsarTerm (const double t, dvec& i, dvec& e, const double L, dvec& pUV) {
+double pulsarTerm (const double t, dvec& e, dvec& i, const double L, dvec& pUV) {
     // unpack the parameters
-    double theta  = e.at(0),
-           phi    = e.at(1),
-           omega0 = e.at(2);
+    double theta  = i.at(0),
+           phi    = i.at(1),
+           omega0 = i.at(2);
 
     // Initialize the unit vector data struct
     UnitVectors v (theta, phi);
@@ -117,8 +117,8 @@ double pulsarTerm (const double t, dvec& i, dvec& e, const double L, dvec& pUV) 
     double tp = t - L * (1 + dotProduct(vOmega, pUV));
 
     // Calculate
-    dvec F = antennaPattern(e, pUV),
-         s = gravWaveContrib(tp, i, omega0);
+    dvec F = antennaPattern(i, pUV),
+         s = gravWaveContrib(tp, e, omega0);
 
     return dotProduct(F,s);
 }
@@ -129,27 +129,43 @@ double noise (const double t, const double whiteNoise, dvec& redNoise, dvec& pow
            red = 0,
            powerLaw = 0;
 
+    random_uniform_free;
+
     return white + red + powerLaw;
 }
 
 double individualSource (const double t, dvec& params, const double L, dvec& pUV) {
-    dvec intrinsic (5, 0),
-         extrinsic (3, 0);
+    dvec extrinsic (5, 0),
+         intrinsic (3, 0);
 
     // Translate params
-    intrinsic[0] = params.at(0);
-    intrinsic[1] = params.at(1);
-    intrinsic[2] = params.at(2);
-    intrinsic[3] = params.at(3);
-    intrinsic[4] = params.at(4);
-    extrinsic[0] = params.at(5);
-    extrinsic[1] = params.at(6);
-    extrinsic[2] = params.at(7);
+    extrinsic[0] = params.at(0);
+    extrinsic[1] = params.at(1);
+    extrinsic[2] = params.at(2);
+    extrinsic[3] = params.at(3);
+    extrinsic[4] = params.at(4);
+    intrinsic[0] = params.at(5);
+    intrinsic[1] = params.at(6);
+    intrinsic[2] = params.at(7);
 
-    dvec a = amplitude(intrinsic),
-         A = basis (t, extrinsic, pUV);
+    if (fabs(extrinsic[0]) <  1e-31) {
+        throw "Error: The chirp mass of the source is too low";
+    } else if (fabs(extrinsic[0]) < 1e-31) {
+        throw "Error: The distance to the source is too low";
+    } else if (fabs(intrinsic[0]) < 1e-31) {
+        throw "Error: The azimuthal angle is close to the coordinate singularity";
+    }
+    // TODO other things to check
+    // theta close to M_PI
+    // phi out of range of (-M_PI, M_PI)
+    // omega out of detection range
+    // mass out of detection range
+    // iota, psi out of range
 
-    double p = pulsarTerm (t, intrinsic, extrinsic, L, pUV);
+    dvec a = amplitude(extrinsic),
+         A = basis (t, intrinsic, pUV);
+
+    double p = pulsarTerm (t, extrinsic, intrinsic, L, pUV);
 
     return dotProduct(a,A) + p;
 }
