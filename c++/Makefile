@@ -3,8 +3,9 @@ MAKEDIR_P = mkdir -p
 TARGET = data_generator
 LIBS = -lgsl -L/usr/global/intel/mkl/10.2.6.038/lib/em64t \
 	   -lmkl_lapack -lmkl_intel_lp64 -lmkl_core -lmkl_sequential
+#LIBS = -lgsl -L/usr/lib64/atlas/ -lcblas -llapack -latlas
 COMPILER = g++
-CFLAGS = -g -pedantic -Wall -O3
+CFLAGS = -g -pedantic -Wall -O3 -fopenmp
 SRCDIR = src
 OBJDIR = obj
 TESTDIR = test
@@ -16,8 +17,8 @@ all: clean default
 runall: default
 
 # Manually write down the headers and the main program files
-SCR_HH  := linalg.hh pulsar.hh signal-model.hh signal-vectors.hh signal-sampling.hh random-helper.hh
-SCR_CC  := $(patsubst %.hh, %.cc, $(SCR_HH)) data_generator.cc
+SCR_HH  := linalg.hh pulsar.hh signal-model.hh signal-vectors.hh signal-sampling.hh random-helper.hh reduced-basis.hh
+SCR_CC  := $(patsubst %.hh, %.cc, $(SCR_HH)) rb_generator.cc
 TEST_HH := test-linalg.hh test-pulsar.hh test-signal-model.hh test-signal-vectors.hh
 TEST_CC := $(patsubst %.hh, %.cc, $(TEST_HH)) test_runner.cc
 
@@ -46,9 +47,8 @@ test: default
 clean:
 	-rm -rf $(OBJDIR) $(TARGET)
 
-compare: default
-	time ./$(TARGET)
-	time python2 ../py2.7/data-gen.py
+run: default
+	./$(TARGET)
 
 # DO NOT DELETE
 
