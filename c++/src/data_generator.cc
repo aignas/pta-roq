@@ -18,7 +18,7 @@ int main() {
     // Define some variables for bigger timescales
     const double week = 7 * 3600 * 24,
                  year = 52 * week,
-                 t_final = 15 * year,
+                 t_final = 25 * year,
                  dt_min = 2 * week,
                  dt_max = 2 * week;
     std::vector<double> t_init (pulsarNumber, 0),
@@ -37,10 +37,10 @@ int main() {
     std::vector<std::vector<double> > sources (1);
     sources[0].resize(8);
     sources[0][0] = 1;
-    sources[0][1] = 1e31;
-    sources[0][2] = 0;
-    sources[0][3] = 0;
-    sources[0][4] = 0;
+    sources[0][1] = 1e9;
+    sources[0][2] = 0.1;
+    sources[0][3] = 0.1;
+    sources[0][4] = 0.1;
     sources[0][5] = 0.3;
     sources[0][6] = 0.5;
     sources[0][7] = 1e-8;
@@ -51,7 +51,9 @@ int main() {
     generateSample (r, pulsars, indices, Times, sources);
 
     // Output the stuff
-    // FIXME
+    for (unsigned int i = 0; i < r.size(); i++) {
+        std::cout << r[i] << std::endl;
+    }
 
     return 0;
 }
