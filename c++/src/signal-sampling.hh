@@ -21,10 +21,12 @@ const double _M_PI = 3.141592653589793238462643383279502884;
  * @param indices The index of pulsars in the schedule
  * @param Times The time series
  * @param sources A list of sources
+ * @param noise Whether to include noise or not into the sampling
  */
 void generateSample (std::vector<double> & out, std::vector<Pulsar> & pulsars, 
                      std::vector<unsigned short> & indices, std::vector<double> & Times,
-                     std::vector<std::vector<double> > & sources);
+                     std::vector<std::vector<double> > & sources,
+                     bool noise = true);
 
 /**
  * Generate a covariance matrix, which depends on the sampling parameters (i.e. the

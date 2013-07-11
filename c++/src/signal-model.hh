@@ -96,5 +96,6 @@ double individualSource (const double t, dvec& params, const double L, dvec& pul
  * @param sources The parameters of the source(s). If there are more sources, then it is
  *        assumed, that they are put in rows of a matrix (a vector of a vector).
  * @param pulsarProperties The coordinates and the noise properties of the pulsar
+ * @param noise whether to include noise in the signal
  */
-double residual (const double t, const unsigned int N, std::vector<dvec>& sources, Pulsar& pulsarProperties);
+double residual (const double t, const unsigned int N, std::vector<dvec>& sources, Pulsar& pulsarProperties, bool noise);

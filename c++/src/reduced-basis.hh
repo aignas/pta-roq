@@ -5,35 +5,36 @@
 #include "pulsar.hh"
 
 /**
- * Generate the reduced basis set by using a greedy algorithm.
+ * Generate the reduced basis set by using a greedy algorithm. This does not assume on
+ * any functions whilst calculating the 
  *
- * @param indices The indices of the pulsars in the data series
- * @param schedule The time values in the data series
- * @param pulsars The pulsar grid
- * @param params The parameter space. A 1D array of vectors in which there is a
- *    'linspace' type point array.
- * @param covarianceMatrix The covariance matrix to use for the inner product
+ * @param N The number of points in the parameter space
+ * @param getData A function of int, param_out and data_out variable, which would abstract the way
+ *  I am getting data fram the parameter space.
+ * @param A The matrix to use in the inner product
  * @param epsilon The maximum error for the reduced basis
  * @param RB_out The reduced basis output array
+ * @param sigma_out The array for the error variation during the recursion
  */
-void greedyReducedBasis (std::vector<unsigned short> & indices,
-                         std::vector<double> & schedule,
-                         std::vector<Pulsar> & pulsars,
-                         std::vector< std::vector<double> > & params,
-                         std::vector<double> & covarianceMatrix,
+void greedyReducedBasis (const unsigned long N,
+                         void (*getData)(unsigned long idx, 
+                                         std::vector<double> & params_out, 
+                                         std::vector<double> & data_out),
+                         std::vector<double> & A,
                          const double & epsilon,
-                         std::vector<std::vector<double> > & RB_out);
+                         std::vector<std::vector<double> > & RB_param_out,
+                         std::vector<std::vector<double> > & RB_out,
+                         std::vector<double> & sigma_out);
 
 /**
- * Translate an integer to a point in the parameter space. We do not store a grid, which
- * would  use lots of memory, we just return the parameter from the space via this
- * function
+ * Generate a list of numbers from a single number. This acts as a good way to recover
+ * data from a parameter space stored in an array sequentially
  *
- * @param idx This is an index in the parameter space (ranges from 0 to the total number
- *    of points in the parameter space
- * @param params The list of parameter values. It is basically a vector of ranges.
- * @param param_out The output array
+ * @param idx A long number of choice, which should be in a range of the parameter
+ *   space.
+ * @param dim A list of dimensionalities of the parameter space.
+ * @param list_out The output array
  */
-void idToParam (unsigned long idx, 
-        std::vector<std::vector<double> > & params, 
-        std::vector<std::vector<double> > & param_out);
+void idToList (unsigned long idx, 
+               std::vector<unsigned int> dim, 
+               std::vector<unsigned int> & list_out);

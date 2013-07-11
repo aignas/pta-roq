@@ -9,7 +9,8 @@
 
 void generateSample (std::vector<double>& out, std::vector<Pulsar> &pulsars,
                      std::vector<unsigned short>& indices, std::vector<double>& Times,
-                     std::vector<std::vector<double> > &sources) { 
+                     std::vector<std::vector<double> > &sources,
+                     bool noise) { 
     Pulsar pulsar;
     const unsigned int N = indices.size();
 
@@ -19,7 +20,7 @@ void generateSample (std::vector<double>& out, std::vector<Pulsar> &pulsars,
 
     // Start collecting the data
     for (unsigned int i = 0; i < N; i++) {
-        out[i] = residual(Times[i], indices[i], sources, pulsar);
+        out[i] = residual(Times[i], indices[i], sources, pulsar, noise);
     }
 }
 

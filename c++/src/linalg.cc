@@ -48,31 +48,39 @@ void constructGrammian (dvec &G, std::vector<dvec>& set, dvec& A) {
 
         for (unsigned int j = i+1; j < N; j++) {
             // calculate the offdiagonal terms
-            G.at(N*j + i) = innerProduct (set[i], A, set[j]);
-            G.at(j + N*i) = G[i + N*j];
+            G.at(N*i + j) = innerProduct (set[i], A, set[j]);
+            G.at(i + N*j) = G[j + N*i];
         }
     }
 }
 
 void projectionResidual (dvec & projectee, std::vector<dvec> & set, 
-                         dvec & A, dvec & G, 
+                         dvec & A, dvec & G_inv, 
                          dvec & coeffs) {
     std::vector<double> tmp (projectee.size());
-    unsigned int N = set.size();
+    unsigned int N = set.size(), Nc = coeffs.size();
 
+    /*
     // Calculate the missing coefficients
-    for (unsigned int i = coeffs.size(); i < N; i++) {
+    for (unsigned int i = Nc; i < N; i++) {
         coeffs.push_back(0);
 
         // Calculate the last coefficient, as we already are storring the rest
-        for (unsigned int j = 0; j < N - 1; j++) {
-            coeffs.at(i) += G[i + j*N] * innerProduct(projectee, A, set[j]);
+        for (unsigned int j = 0; j < N; j++) {
+            coeffs[i] += G_inv[j + i*N] * innerProduct(projectee, A, set[j]);
         }
     }
+    */
 
     for (unsigned int i = 0; i < N; i++) {
+        // Calculate the last coefficient, as we already are storring the rest
+        double c_i = 0;
+        for (unsigned int j = 0; j < N; j++) {
+            c_i += G_inv[j + i*N] * innerProduct(projectee, A, set[j]);
+        }
+
         // Use BLAS to multiply by a constant
-        cblas_daxpy(projectee.size(), - coeffs[i], &set[i][0], 1, &projectee[0], 1);
+        cblas_daxpy(projectee.size(), - c_i, &set[i][0], 1, &projectee[0], 1);
     }
 
 }
@@ -118,4 +126,44 @@ void inverse (std::vector<double> & A) {
 
     IPIV.clear();
     WORK.clear();
+}
+
+int arrayEqual (dvec &x, dvec &y) {
+    int r = 0;
+    bool equal = (x.size() == y.size());
+
+    for (unsigned int i = 0; i < x.size() and equal; i++) {
+        equal = equal and (x[i] - y[i] < 1e-300);
+    }
+
+    if (not equal) {
+        r++;
+    }
+
+    return r;
+}
+
+void findMax (dvec & A, long & argmax_out, double & max_out) {
+    // FIXME exception if the array is 0 size
+    unsigned long N = A.size();
+
+    // No need to compare first element with the first
+    max_out = A.at(0), argmax_out = 0;
+
+    /*
+     * Parallelize the maximum search, taken from:
+     * http://openmp.org/forum/viewtopic.php?f=3&t=70&start=0&hilit=max+reduction+array
+     */
+#pragma omp parallel for
+    for (unsigned long i = 1; i < N; i++) {
+        if (max_out < A.at(i)) {
+#pragma omp critical
+            {
+                if (max_out < A.at(i)) {
+                    argmax_out = i;
+                    max_out = A.at(i);
+                }
+            }
+        }
+    }
 }

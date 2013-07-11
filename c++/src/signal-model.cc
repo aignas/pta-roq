@@ -129,7 +129,7 @@ double noise (const double t, const double whiteNoise, dvec& redNoise, dvec& pow
            red = 0,
            powerLaw = 0;
 
-    random_uniform_free;
+    random_uniform_free();
 
     return white + red + powerLaw;
 }
@@ -171,7 +171,7 @@ double individualSource (const double t, dvec& params, const double L, dvec& pUV
 }
 
 // FIXME: Here I need a structure, so that I would have only a single pulsar properties
-double residual (const double t, const unsigned int N, std::vector<dvec>& sources, Pulsar& pulsarProperties) {
+double residual (const double t, const unsigned int N, std::vector<dvec>& sources, Pulsar& pulsarProperties, bool noiseInclude) {
     // Separate the pulsar properties into the unit Vector, distance and noise
     // properties
 
@@ -189,7 +189,9 @@ double residual (const double t, const unsigned int N, std::vector<dvec>& source
     }
 
     // Add noise to the signal
-    Signal += noise (t, white, red, pwlaw);
+    if (noiseInclude) {
+        Signal += noise (t, white, red, pwlaw);
+    }
 
     return Signal;
 }

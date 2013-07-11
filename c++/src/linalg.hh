@@ -81,3 +81,20 @@ void linspace (dvec & array_out, double min, double max, const unsigned int N);
  * @param The dimensionality of the matrix (it is assumed we have a square matrix)
  */
 void inverse (dvec & A);
+
+/**
+ * Check if arrays containing double are equal
+ *
+ * @param x Array
+ * @param y Array
+ */
+int arrayEqual (dvec &x, dvec &y);
+
+/**
+ * Find a maximum value in the array
+ *
+ * @param A The array
+ * @param argmax_out The index of the maximum value
+ * @param max_out The value of the maximum
+ */
+void findMax (dvec & A, long & argmax_out, double & max_out);

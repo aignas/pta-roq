@@ -1,6 +1,5 @@
 
 #include <vector>
-#include <valarray>
 #include <iostream>
 
 #include "pulsar.hh"
@@ -10,127 +9,124 @@
 
 #include "reduced-basis.hh"
 
-void greedyReducedBasis (std::vector<unsigned short> & indices,
-                         std::vector<double> & schedule,
-                         std::vector<Pulsar> & pulsars,
-                         std::vector< std::vector<double> > & params,
-                         std::vector<double> & covarianceMatrix,
+#include <omp.h>
+
+#define CHUNKSIZE 20;
+
+bool arrayContainsLong (long N, std::vector<long> & A);
+
+void greedyReducedBasis (const unsigned long N,
+                         void (*getData)(unsigned long idx, std::vector<double> & params_out, std::vector<double> & data_out),
+                         std::vector<double> & A,
                          const double & epsilon,
-                         std::vector<std::vector<double> > & RB_out) {
+                         std::vector<std::vector<double> > & RB_param_out,
+                         std::vector<std::vector<double> > & RB_out,
+                         std::vector<double> & sigma_out) {
     // Initialise an empty Grammaian, the parameter space and calculate the size of the
     // parameter space (total number of points)
 
-    unsigned long totalNumber = 1;
-    for (unsigned int i = 0; i < params.size(); i++) {
-        totalNumber *= params.at(i).size();
-    }
-
-    std::vector<double> sigmaTrial (totalNumber, 0);
-    std::vector<std::vector<double> > projectionCoeffs (totalNumber);
+    std::vector<double> sigmaTrial (N, 0);
+    std::vector<std::vector<double> > projectionCoeffs (N);
     
     // Seed choice (arbitrary). We just randomize the first choice. We also select the
     // first error arbitrary. This is just to have the same dimensions of two arrays
-    std::vector<double> sigma (1, 1);
-    std::vector<double> sigma_trial (totalNumber, 0);
+    std::vector<double> sigma_trial (N, 0);
+
+    //std::vector<long> RB_N {random_uniform_int(0, N)};
+    std::vector<long> RB_N {0};
 
     // Randomize the first basis
+    sigma_out.resize(0);
     RB_out.resize(0);
-    // Allocate some memory to params_trial
-    std::vector<std::vector<double> > params_trial;
-    std::cout << random_uniform_int(0, totalNumber, 1) << std::endl;
+    RB_param_out.resize(0);
 
-    idToParam(random_uniform_int(0, totalNumber), params, params_trial);
+    // Allocate some memory to params_trial and data arrays
+    std::vector<double> params_trial, data;
 
-    RB_out.push_back(params_trial[0]);
+    // Get data and parameters
+    (*getData)(RB_N[0], params_trial, data);
 
-    std::vector<double> data (indices.size(), 0);
+    // Push back the values
+    sigma_out.push_back(1000);
+    RB_param_out.push_back(params_trial);
+    RB_out.push_back(data);
 
-    std::vector<std::vector<double> > RB_Training;
-    generateSample (data, pulsars, indices, schedule, RB_out);
-    RB_Training.push_back(data);
+    // Lets have a counter, which would mean that we search for basis even if epsilon
+    // goes very small
+    unsigned counter = 0;
 
     // The parameter space is large, so the computation will be expensive
-    while (sigma.back() > epsilon) {
+    while (sigma_out.back() > epsilon and counter < 3) {
         // Construct the Gram matrix and its inverse
-        // FIXME 
-        std::vector<double> Grammian;
-        constructGrammian (Grammian, RB_Training, covarianceMatrix);
-        std::vector<double> Grammian_inv = Grammian;
+        // FIXME Use the previous Grammian to just extend it?
+        std::vector<double> Grammian_inv;
+        constructGrammian (Grammian_inv, RB_out, A);
         inverse (Grammian_inv);
 
-        // FIXME Make this parallel with the pragmas
+        unsigned long chunk = CHUNKSIZE;
+
+#pragma omp parallel for shared(sigma_trial, chunk) private(data, params_trial)
         // Stupidly traverse the entire parameter space
-        // NOTE: We could have MCMC or a simple MC method as well
         // Can we edit the ranges where we are searching by discarding regions in
         // parameter space when we find the vectors? (Suggestion by Priscilla)
-        for (unsigned long i = 0; i < totalNumber; i++) {
+        for (unsigned long j = 0; j < N; j++) {
+            sigma_trial.at(j) = 0;
 
-            // the params_trial does not have to be zeroed away
-            // This is a temporary variable
-            std::vector<std::vector<double> > params_tmp;
-            idToParam(i, params, params_tmp);
-
-            // Calculate the data
-            generateSample (data, pulsars, indices, schedule, params_tmp);
-
-            projectionResidual (data, RB_Training, 
-                                covarianceMatrix, Grammian_inv, 
-                                projectionCoeffs.at(i));
-
-            sigma_trial.at(i) = norm (data, covarianceMatrix);
-
-            /*
-            for (unsigned j = 0; j < params_tmp[0].size(); j++) {
-                std::cout << params_tmp[0][j] << "\t";
+            // Do not include the same point in the calculation
+            if (arrayContainsLong(j, RB_N)) {
+                continue;
             }
-            std::cout << sigma_trial.at(i) << std::endl;
-            */
+
+            (*getData)(j, params_trial, data);
+
+            projectionResidual (data, RB_out, A, Grammian_inv, projectionCoeffs.at(j));
+
+            sigma_trial.at(j) = innerProduct (data, A, data);
         }
+        
+        sigma_out.push_back(0);
+        RB_N.push_back(0);
 
-        // Find a maximum in the calculated errors
-        double sigma_max = sigma_trial.at(0),
-               sigma_max_tmp;
-        unsigned long sigma_arg_max = 0;
-        for (unsigned long i = 1; i < totalNumber; i++) {
-            sigma_max_tmp = sigma_trial.at(i);
-            if (sigma_max < sigma_max_tmp) {
-                sigma_max = sigma_max_tmp;
-                sigma_arg_max = i;
-            }
+        findMax(sigma_trial, RB_N.back(), sigma_out.back());
+
+        if (sigma_out.back() > epsilon) {
+            // Add the lambda_i, which was found by maximizing the error
+            (*getData)(RB_N.back(), params_trial, data);
+
+            RB_param_out.push_back(params_trial);
+            RB_out.push_back(data);
+        } else {
+            sigma_out.pop_back();
+            RB_N.pop_back();
+            counter++;
         }
-
-        sigma.push_back(sigma_max);
-
-        // Add the lambda_i, which was found by maximizing the error
-        idToParam(sigma_arg_max, params, params_trial);
-        RB_out.push_back(params_trial[0]);
-
-        generateSample (data, pulsars, indices, schedule, params_trial);
-        RB_Training.push_back(data);
-
-        std::cout << "Number of RB and the error: "
-                  << sigma.size() << " " << sigma.back() << std::endl;
     }
 
-    // Free the memory
+    // Free the memory occupied by the PRNG
     random_uniform_free();
 }
 
-void idToParam (unsigned long idx, 
-                std::vector<std::vector<double> > & space, 
-                std::vector<std::vector<double> > & param_out) {
-
-    std::vector<double> tmp (space.size(), 0);
-    param_out.clear();
+void idToList (unsigned long idx, 
+               std::vector<unsigned int> dim, 
+               std::vector<unsigned int> & list_out) {
+    // Clear the output vector
+    list_out.resize(dim.size());
 
     // Construct the test vector of the parameters
-    for (unsigned int i = 0; i < tmp.size(); i++) {
-        unsigned int n = idx % space.at(i).size();
-        tmp.at(i) = space.at(i).at(n);
-        idx = idx / space[i].size();
+    for (unsigned int i = 0; i < dim.size(); i++) {
+        list_out[i] = idx % dim[i];
+        idx = idx / dim[i];
     }
-
-    // This could be generalized to search of more than one source
-    param_out.push_back(tmp);
 }
 
+bool arrayContainsLong (long N, std::vector<long> & A) {
+    bool r = false;
+    for (unsigned i = 0; i < A.size(); i++) {
+        if (A[i] == N) {
+            r = true;
+            break;
+        }
+    }
+    
+    return r;
+}
