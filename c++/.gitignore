@@ -1,5 +1,5 @@
 *.so
 *.o
 data_generator
-lib_test
-rb_gen
+rb_generator
+test_runner
