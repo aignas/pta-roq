@@ -1,55 +1,94 @@
 MAKEDIR_P = mkdir -p
 
-TARGET = data_generator
 LIBS = -lgsl -L/usr/global/intel/mkl/10.2.6.038/lib/em64t \
 	   -lmkl_lapack -lmkl_intel_lp64 -lmkl_core -lmkl_sequential
 #LIBS = -lgsl -L/usr/lib64/atlas/ -lcblas -llapack -latlas
-COMPILER = g++
-CFLAGS = -g -pedantic -Wall -O3 -fopenmp
-SRCDIR = src
-OBJDIR = obj
-TESTDIR = test
+COMPILER = g++ -fopenmp
+CFLAGS = -g -std=c++11 -pedantic -Wall -O3
 
-.PHONY: default all clean
+# Some directory variables
+DIR_SRC  = src
+DIR_OBJ  = obj
+DIR_SRC_T = src_test
+DIR_OBJ_T = obj_test
 
-default: $(OBJDIR) $(TARGET)
-all: clean default
-runall: default
+.PHONY: compile debug_compile clean
 
 # Manually write down the headers and the main program files
-SCR_HH  := linalg.hh pulsar.hh signal-model.hh signal-vectors.hh signal-sampling.hh random-helper.hh reduced-basis.hh
-SCR_CC  := $(patsubst %.hh, %.cc, $(SCR_HH)) rb_generator.cc
-TEST_HH := test-linalg.hh test-pulsar.hh test-signal-model.hh test-signal-vectors.hh
-TEST_CC := $(patsubst %.hh, %.cc, $(TEST_HH)) test_runner.cc
+SRC_LIB_HH    := linalg.hh pulsar.hh signal-model.hh signal-vectors.hh signal-sampling.hh random-helper.hh reduced-basis.hh
+SRC_LIB_CC    := $(patsubst %.hh, %.cc, $(SRC_LIB_HH))
 
-OBJECTS := $(patsubst %.cc, $(OBJDIR)/%.o, $(SCR_CC))
+SRC_TARGET_CC := data_generator.cc rb_generator.cc
+SRC_TARGET_OBJ:= $(patsubst %.cc, $(DIR_OBJ)/%.o, $(SRC_TARGET_CC))
+SRC_TARGET    := $(patsubst %.cc, %, $(SRC_TARGET_CC))
 
-$(OBJECTS): | $(OBJDIR)
+SRC_OBJECTS   := $(patsubst %.cc, $(DIR_OBJ)/%.o, $(SRC_LIB_CC))
 
-.PRECIOUS: $(TARGET) $(OBJECTS)
+# For test files as well (include the main headers here as well
+TEST_LIB_HH   := linalg.hh reduced-basis.hh
+TEST_LIB_CC   := $(patsubst %.hh, %.cc, $(TEST_LIB_HH))
 
-$(TARGET): $(OBJECTS) | $(RUNDIR)
-	$(COMPILER) $(OBJECTS) -Wall $(LIBS) -o $@
+TEST_TARGET_CC:= test_runner.cc
+TEST_TARGET_OBJ:=$(patsubst %.cc, $(DIR_OBJ_T)/%.o, $(TEST_TARGET_CC))
+TEST_TARGET   := $(patsubst %.cc, %, $(TEST_TARGET_CC))
 
-$(OBJDIR):
+TEST_OBJECTS  := $(patsubst %.cc, $(DIR_OBJ)/%.o, $(SRC_LIB_CC)) \
+                 $(patsubst %.cc, $(DIR_OBJ_T)/%.o, $(TEST_LIB_CC))
+
+# Append directories to the headers
+SRC_LIB_HH    := $(patsubst %.hh, $(DIR_SRC)/%.hh, $(SRC_LIB_HH))
+TEST_LIB_HH   := $(patsubst %.hh, $(DIR_SRC_T)/%.hh, $(TEST_LIB_HH)) \
+                 $(patsubst %.hh, $(DIR_SRC)/%.hh, $(SRC_LIB_HH))
+
+# All CC files to compile
+ALL_CC        := $(DIR_SRC)/%.cc $(DIR_SRC_T)/%.cc
+
+# Require directory creation
+$(DIR_OBJ):
 	$(MAKEDIR_P) $@
 
-$(RUNDIR):
+$(DIR_OBJ_T):
 	$(MAKEDIR_P) $@
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cc $(HEADERS)
+$(SRC_OBJECTS):     | $(DIR_OBJ)
+$(SRC_TARGET_OBJ):  | $(DIR_OBJ)
+$(TEST_OBJECTS):    | $(DIR_OBJ) $(DIR_OBJ_T)
+$(TEST_TARGET_OBJ): | $(DIR_OBJ) $(DIR_OBJ_T)
+
+$(DIR_OBJ)/%.o: $(DIR_SRC)/%.cc
 	@echo Building $@
 	@$(COMPILER) -c $(CFLAGS) $< -o $@
 
-test: default
-	./$(TARGET) test
+$(DIR_OBJ_T)/%.o: $(DIR_SRC_T)/%.cc
+	@echo Building $@
+	@$(COMPILER) -c $(CFLAGS) $< -o $@
+
+$(SRC_TARGET): $(SRC_TARGET_OBJ)
+	$(COMPILER) $(SRC_OBJECTS) obj/$@.o -Wall $(LIBS) -o $@
+
+$(TEST_TARGET): $(TEST_TARGET_OBJ)
+	$(COMPILER) $(TEST_OBJECTS) $< -Wall $(LIBS) -o $@
+
+.PRECIOUS: $(SRC_TARGET) $(SRC_OBJECTS) $(TEST_TARGET) $(TEST_OBJECTS)
+
+default: clean compile
+all: default
+
+compile: clean $(SRC_OBJECTS) $(SRC_TARGET_OBJ) $(SRC_TARGET)
+compile_test: clean $(TEST_OBJECTS) $(TEST_TARGET_OBJ) $(TEST_TARGET)
+
+debug_compile: cleanall compile compile_test
+
+test: compile_test
+	@echo Executing the test suite
+	./test_runner
+
+rb: clean compile
+	@echo Running the Reduced Basis generator
+	./rb_generator
+
+cleanall:
+	-rm -rf $(DIR_OBJ) $(DIR_OBJ_T) $(SRC_TARGET) $(TEST_TARGET)
 
 clean:
-	-rm -rf $(OBJDIR) $(TARGET)
-
-run: default
-	./$(TARGET)
-
-# DO NOT DELETE
-
-
+	-rm -rf $(SRC_TARGET) $(TEST_TARGET)
