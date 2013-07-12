@@ -35,7 +35,7 @@ namespace G {
 void getData(unsigned long idx, std::vector<double> & params_out, std::vector<double> & data_out);
 
 int main() {
-    unsigned int pulsarNumber = 6;
+    unsigned int pulsarNumber = 36;
     // The range initializer using C++11
     std::vector<double> range {50, 100, 0, _M_PI, -_M_PI, _M_PI};
 
@@ -43,7 +43,7 @@ int main() {
     const double week = 7 * 3600 * 24,
                  year = 52 * week,
 
-                 t_final = 0.5 * year,
+                 t_final = 5 * year,
                  dt_min = 2 * week,
                  dt_max = 2 * week;
 
@@ -51,7 +51,7 @@ int main() {
 
     // Randomize the pulsar structure and generate a schedule
     std::cout << "Randomizing the initial conditions" << std::endl;
-    pulsarGrid::randomizeData (G::pulsars, pulsarNumber, range, 0.0005);
+    pulsarGrid::randomizeData (G::pulsars, pulsarNumber, range, 1e-15);
     std::cout << "Constructing the schedule of measuremnts" << std::endl;
     pulsarGrid::generateSchedule (t_init, t_final, dt_min, dt_max, G::indices, G::Times);
 
@@ -62,9 +62,9 @@ int main() {
     linspace(G::params[2], 0.1, 0.3, 1);
     linspace(G::params[3], 0.1, 0.3, 1);
     linspace(G::params[4], 0.1, 0.3, 1);
-    linspace(G::params[5], 0.8, 3.1415-0.8, 300);
-    linspace(G::params[6], -0.9, 0.9, 300);
-    linspace(G::params[7], 1.0e-9, 1.0e-8, 300);
+    linspace(G::params[5], 1.2, 1.5, 10);
+    linspace(G::params[6], -0.2, 0.2, 10);
+    linspace(G::params[7], 5.0e-9, 1.0e-8, 30);
 
     // Construct the dimensionalities vector
     unsigned long totalNumber = 1;
@@ -74,7 +74,7 @@ int main() {
     }
 
     // Set the error
-    const double epsilon = 1e-54;
+    const double epsilon = 1e-35;
 
     // Constructing a covariance matrix
     std::cout << "Constructing the covariance matrix" << std::endl;
@@ -85,9 +85,10 @@ int main() {
     std::cout << "Generating the reduced basis set" << std::endl;
     std::vector<std::vector<double> > RB_params, RB;
     std::vector<double> sigma;
-    greedyReducedBasis (totalNumber, getData, C_inv, epsilon, RB_params, RB, sigma);
+    greedyReducedBasis (totalNumber, getData, C_inv, epsilon, RB_params, RB, sigma, true);
 
     // Lets output the generated basis parameters and the error
+    std::cout << "Outputing the generated basis to a files" << std::endl;
     std::ofstream sigma_out, RB_params_out;
     sigma_out.open("sigma.out");
     RB_params_out.open("params.out");

@@ -28,49 +28,82 @@ double dotProduct (dvec& x, dvec& y) {
     return r;
 }
 
-double innerProduct(dvec& x, dvec& A, dvec& y) {
-    std::vector<double> tmp (x.size(), 0);
+void axpyProduct(double a, dvec & x, dvec & y) {
+    cblas_daxpy(y.size(), a, &x[0], 1, &y[0], 1);
+}
 
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, y.size(), y.size(), 1, &A[0], y.size(), &y[0], 1, 0, &tmp[0], 1);
+void matrixVectorProduct (dvec& A, dvec& x, dvec& y) {
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, x.size(), x.size(), 1, &A[0], x.size(), &x[0], 1, 0, &y[0], 1);
+}
+
+double innerProduct(dvec& x, dvec& A, dvec& y) {
+    dvec tmp (x.size());
+
+    matrixVectorProduct (A, y, tmp);
 
     double r = cblas_ddot(x.size(), &x[0], 1, &tmp[0], 1);
 
     return r;
 }
 
-void constructGrammian (dvec &G, std::vector<dvec>& set, dvec& A) {
+void extendGrammianOptimized (dvec &G, dvec& G_inv, std::vector<dvec>& set, std::vector<dvec>& set_hat) {
+    // Assign the old matrix to the new one
+    unsigned int N = set.size();
+    G_inv.resize(N*N);
+
+    double tmp = 0;
+    // We are extending the grammian in a clever way
+    for (unsigned int i = 0; i < N - 1; i++) {
+        tmp = dotProduct(set[N-1], set_hat[i]);
+        G.emplace(G.begin() + i*N + (N-1), tmp);
+        G.push_back(tmp);
+    }
+
+    tmp = dotProduct(set[N-1], set_hat[N-1]);
+    G.push_back(tmp);
+
+    G_inv = G;
+
+    inverse(G_inv);
+}
+
+void constructGrammianOptimized (dvec &G, std::vector<dvec>& set, std::vector<dvec>& set_hat) {
     unsigned int N = set.size();
     G.resize(N*N);
 
+    if (N != set_hat.size()) {
+        std::cout << "The two sets should have the same number of members" << std::endl;
+    }
+
     for (unsigned int i = 0; i < N; i++) {
         // The matrix is symmetric, hence calculate the diagonal terms here
-        G.at(i * (N + 1)) = innerProduct (set[i], A, set[i]);
+        G.at(i * (N + 1)) = dotProduct (set[i], set_hat[i]);
 
         for (unsigned int j = i+1; j < N; j++) {
             // calculate the offdiagonal terms
-            G.at(N*i + j) = innerProduct (set[i], A, set[j]);
+            G.at(N*i + j) = dotProduct (set[i], set_hat[j]);
             G.at(i + N*j) = G[j + N*i];
         }
     }
 }
 
-void projectionResidual (dvec & projectee, std::vector<dvec> & set, 
-                         dvec & A, dvec & G_inv, 
-                         dvec & coeffs) {
-    std::vector<double> tmp (projectee.size());
-    unsigned int N = set.size(), Nc = coeffs.size();
+void constructGrammian (dvec &G, std::vector<dvec>& set, dvec& A) {
+    unsigned int N = set.size();
+    G.resize(N*N);
 
-    /*
-    // Calculate the missing coefficients
-    for (unsigned int i = Nc; i < N; i++) {
-        coeffs.push_back(0);
+    std::vector<dvec> set_tmp = set;
 
-        // Calculate the last coefficient, as we already are storring the rest
-        for (unsigned int j = 0; j < N; j++) {
-            coeffs[i] += G_inv[j + i*N] * innerProduct(projectee, A, set[j]);
-        }
+    for (unsigned int i = 0; i < N; i++) {
+        matrixVectorProduct (A, set.at(i), set_tmp.at(i));
     }
-    */
+
+    // Use the slightly optimized route
+    constructGrammianOptimized (G, set, set_tmp);
+}
+
+void projectionResidual (dvec & projectee, std::vector<dvec> & set, 
+                         dvec & A, dvec & G_inv) {
+    unsigned int N = set.size();
 
     for (unsigned int i = 0; i < N; i++) {
         // Calculate the last coefficient, as we already are storring the rest
@@ -79,8 +112,26 @@ void projectionResidual (dvec & projectee, std::vector<dvec> & set,
             c_i += G_inv[j + i*N] * innerProduct(projectee, A, set[j]);
         }
 
-        // Use BLAS to multiply by a constant
-        cblas_daxpy(projectee.size(), - c_i, &set[i][0], 1, &projectee[0], 1);
+        axpyProduct(- c_i, set[i], projectee);
+    }
+
+}
+
+void projectionResidualOptimized (dvec & projectee, std::vector<dvec> & set, 
+                         std::vector<dvec> & set_hat, dvec & G_inv) {
+    unsigned int N = set.size();
+
+    double c_i;
+
+    for (unsigned int i = 0; i < N; i++) {
+        c_i = 0;
+        for (unsigned int j = 0; j < N; j++) {
+            // FIXME check for overflow/underflow
+            c_i += G_inv[j + i*N] * dotProduct(projectee, set_hat[j]);
+        }
+
+        // FIXME check for overflow/underflow
+        axpyProduct(- c_i, set[i], projectee);
     }
 
 }

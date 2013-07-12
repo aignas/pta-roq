@@ -15,6 +15,7 @@
  * @param epsilon The maximum error for the reduced basis
  * @param RB_out The reduced basis output array
  * @param sigma_out The array for the error variation during the recursion
+ * @param verbose should data be printed to stdout?
  */
 void greedyReducedBasis (const unsigned long N,
                          void (*getData)(unsigned long idx, 
@@ -24,7 +25,8 @@ void greedyReducedBasis (const unsigned long N,
                          const double & epsilon,
                          std::vector<std::vector<double> > & RB_param_out,
                          std::vector<std::vector<double> > & RB_out,
-                         std::vector<double> & sigma_out);
+                         std::vector<double> & sigma_out,
+                         bool verbose = false);
 
 /**
  * Generate a list of numbers from a single number. This acts as a good way to recover
@@ -36,5 +38,5 @@ void greedyReducedBasis (const unsigned long N,
  * @param list_out The output array
  */
 void idToList (unsigned long idx, 
-               std::vector<unsigned int> dim, 
+               std::vector<unsigned int> & dim, 
                std::vector<unsigned int> & list_out);

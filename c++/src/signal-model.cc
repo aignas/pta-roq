@@ -165,7 +165,9 @@ double individualSource (const double t, dvec& params, const double L, dvec& pUV
     dvec a = amplitude(extrinsic),
          A = basis (t, intrinsic, pUV);
 
-    double p = pulsarTerm (t, extrinsic, intrinsic, L, pUV);
+    // FIXME Do not use the pulsar term for the time being. Think of a switch to implement it
+    //double p = pulsarTerm (t, extrinsic, intrinsic, L, pUV);
+    double p = 0;
 
     return dotProduct(a,A) + p;
 }

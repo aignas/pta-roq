@@ -21,12 +21,13 @@ void greedyReducedBasis (const unsigned long N,
                          const double & epsilon,
                          std::vector<std::vector<double> > & RB_param_out,
                          std::vector<std::vector<double> > & RB_out,
-                         std::vector<double> & sigma_out) {
+                         std::vector<double> & sigma_out,
+                         bool verbose) {
     // Initialise an empty Grammaian, the parameter space and calculate the size of the
     // parameter space (total number of points)
 
     std::vector<double> sigmaTrial (N, 0);
-    std::vector<std::vector<double> > projectionCoeffs (N);
+    std::vector<std::vector<double> > RB_out_hat;
     
     // Seed choice (arbitrary). We just randomize the first choice. We also select the
     // first error arbitrary. This is just to have the same dimensions of two arrays
@@ -50,25 +51,39 @@ void greedyReducedBasis (const unsigned long N,
     sigma_out.push_back(1000);
     RB_param_out.push_back(params_trial);
     RB_out.push_back(data);
+    RB_out_hat.push_back(data);
+    matrixVectorProduct (A, RB_out.back(), RB_out_hat.back());
 
+    // Output if demanded
+    if (verbose) {
+        std::cout << "N, id, error, p1, p2, p3, p4, p5, p6, p7, p8" << std::endl;
+        std::cout << sigma_out.size() << ", " << RB_N.back() << ", " << sigma_out.back();
+        for (unsigned j = 0; j < RB_param_out.back().size(); j++) {
+            std::cout << ", " << RB_param_out.back().at(j);
+        }
+        std::cout << std::endl;
+    }
     // Lets have a counter, which would mean that we search for basis even if epsilon
     // goes very small
     unsigned counter = 0;
 
+    std::vector<double> Grammian, Grammian_inv;
+
     // The parameter space is large, so the computation will be expensive
-    while (sigma_out.back() > epsilon and counter < 3) {
+    while (sigma_out.back() > epsilon) {
         // Construct the Gram matrix and its inverse
         // FIXME Use the previous Grammian to just extend it?
-        std::vector<double> Grammian_inv;
-        constructGrammian (Grammian_inv, RB_out, A);
-        inverse (Grammian_inv);
+        extendGrammianOptimized (Grammian, Grammian_inv, RB_out, RB_out_hat);
+        //constructGrammianOptimized (Grammian, RB_out, RB_out_hat);
 
         unsigned long chunk = CHUNKSIZE;
 
-#pragma omp parallel for shared(sigma_trial, chunk) private(data, params_trial)
         // Stupidly traverse the entire parameter space
         // Can we edit the ranges where we are searching by discarding regions in
         // parameter space when we find the vectors? (Suggestion by Priscilla)
+        //
+        // parallelize it with OpenMP
+#pragma omp parallel for shared(sigma_trial, chunk) private(data, params_trial)
         for (unsigned long j = 0; j < N; j++) {
             sigma_trial.at(j) = 0;
 
@@ -79,7 +94,7 @@ void greedyReducedBasis (const unsigned long N,
 
             (*getData)(j, params_trial, data);
 
-            projectionResidual (data, RB_out, A, Grammian_inv, projectionCoeffs.at(j));
+            projectionResidualOptimized (data, RB_out, RB_out_hat, Grammian_inv);
 
             sigma_trial.at(j) = innerProduct (data, A, data);
         }
@@ -89,16 +104,22 @@ void greedyReducedBasis (const unsigned long N,
 
         findMax(sigma_trial, RB_N.back(), sigma_out.back());
 
-        if (sigma_out.back() > epsilon) {
-            // Add the lambda_i, which was found by maximizing the error
-            (*getData)(RB_N.back(), params_trial, data);
+        // Add the lambda_i, which was found by maximizing the error
+        (*getData)(RB_N.back(), params_trial, data);
 
-            RB_param_out.push_back(params_trial);
-            RB_out.push_back(data);
-        } else {
-            sigma_out.pop_back();
-            RB_N.pop_back();
-            counter++;
+        RB_param_out.push_back(params_trial);
+        RB_out.push_back(data);
+        RB_out_hat.push_back(data);
+        // Multiply one of the basis vectors with the covariance matrix
+        matrixVectorProduct (A, RB_out.back(), RB_out_hat.back());
+
+        // Output if demanded
+        if (verbose) {
+            std::cout << sigma_out.size() << ", " << RB_N.back() << ", " << sigma_out.back();
+            for (unsigned j = 0; j < RB_param_out.back().size(); j++) {
+                std::cout << ", " << RB_param_out.back().at(j);
+            }
+            std::cout << std::endl;
         }
     }
 
@@ -107,7 +128,7 @@ void greedyReducedBasis (const unsigned long N,
 }
 
 void idToList (unsigned long idx, 
-               std::vector<unsigned int> dim, 
+               std::vector<unsigned int> & dim, 
                std::vector<unsigned int> & list_out) {
     // Clear the output vector
     list_out.resize(dim.size());

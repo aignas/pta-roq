@@ -70,11 +70,11 @@ int test_greedyReducedBasis () {
     int N = TestG::dataSpace.size();
     linspace(TestG::paramSpace.at(0), 0, 1, N);
 
-    greedyReducedBasis (N, getTestData, A, 0.000000001, RB_param, RB, sigma);
+    greedyReducedBasis (N, getTestData, A, 0.000000001, RB_param, RB, sigma, false);
 
     int r = 0;
 
-    if (RB.size() != 3) {
+    if (not (RB.size() == 4 or RB.size() == 3)) {
         r++;
     }
 

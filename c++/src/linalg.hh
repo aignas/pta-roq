@@ -19,6 +19,15 @@ typedef std::valarray<double> darray;
 double dotProduct (dvec& x, dvec& y);
 
 /**
+ * A matrix-vector product y = Ax
+ *
+ * @param A The matrix
+ * @param x The multiplied vector
+ * @param y The output vector
+ */
+void matrixVectorProduct (dvec& A, dvec& x, dvec& y);
+
+/**
  * A generalised inner product of 2 vectors of same dimensionality n, which are
  * multiplied with a given matrix.
  *
@@ -40,19 +49,46 @@ double innerProduct (dvec& x, dvec& A, dvec& y);
 void constructGrammian (dvec &G, std::vector<dvec>& set, dvec& A);
 
 /**
+ * An optimized version of constructing the grammian
+ *
+ * @param G An output array
+ * @param set A set of basis vectors
+ * @param set_hat A set of basis vectors premultiplied with the innerproduct matrix
+ */
+void constructGrammianOptimized (dvec &G, std::vector<dvec>& set, std::vector<dvec>& set_hat);
+
+/**
+ * Extend the Grammian matrix
+ *
+ * @param G The grammian to extend
+ * @param set A set of basis vectors
+ * @param set_hat A set of basis vectors premultiplied with the innerproduct matrix
+ */
+void extendGrammianOptimized (dvec &G, dvec &G_inv, std::vector<dvec>& set, std::vector<dvec>& set_hat);
+
+/**
  * Project a vector onto basis vectors
  *
  * @param projectee The vector to project
  * @param set The set of vector on which to project
  * @param A The matrix for the inner product
  * @param G_inv The inverse Grammian matrix for orthogonalization of the set
- * @params coeffs The coefficients for speeding up the calculation. If there are
- *   projection coefficients already calculated, then we can use them to speed up the
- *   calculation
  */
 void projectionResidual (dvec & projectee, std::vector<dvec> & set, 
-                         dvec & A, dvec & G_inv, 
-                         dvec & coeffs);
+                         dvec & A, dvec & G_inv);
+
+/**
+ * Project a vector onto basis vectors, an optimized version, which uses to sets of
+ * vectors instead of one set and a matrix
+ *
+ * @param projectee The vector to project
+ * @param set The set of vector on which to project
+ * @param set_hat The set of vector on which to project, multiplied by the innerproduct
+ *   matrix.
+ * @param G_inv The inverse Grammian matrix for orthogonalization of the set
+ */
+void projectionResidualOptimized (dvec & projectee, std::vector<dvec> & set, 
+                         std::vector<dvec> & set_hat, dvec & G_inv);
 
 /**
  * Norm of a vector
@@ -78,7 +114,7 @@ void linspace (dvec & array_out, double min, double max, const unsigned int N);
  * Invert a matrix
  *
  * @param A a matrix with Row Major arrangement
- * @param The dimensionality of the matrix (it is assumed we have a square matrix)
+ * @param A_inv The output (i.e. container for the inverse);
  */
 void inverse (dvec & A);
 

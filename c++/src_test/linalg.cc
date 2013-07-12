@@ -56,7 +56,7 @@ int test_constructGrammian () {
 
 int test_projectionResidual () {
     std::vector<double> x = {1,0.5,0}, y = {1,3,0}, z = {7,1,1},
-                        A = {1,0,0,0,1,0,0,0,1}, G_inv, coeffs, z_answer = {0,0,1};
+                        A = {1,0,0,0,1,0,0,0,1}, G_inv, z_answer = {0,0,1};
 
     std::vector<std::vector<double> > set = {x,x,y};
 
@@ -65,7 +65,7 @@ int test_projectionResidual () {
     inverse(G_inv);
 
     // Check the projection
-    projectionResidual (z, set, A, G_inv, coeffs);
+    projectionResidual (z, set, A, G_inv);
 
     return arrayEqual(z,z_answer);
 }

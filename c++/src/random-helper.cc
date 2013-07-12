@@ -20,7 +20,7 @@ double random_uniform (const double LO,
     }
 
     // return the prn
-    return LO + (double) gsl_rng_uniform(rng)/((double)RAND_MAX/(HI-LO));
+    return LO + (double) gsl_rng_uniform(rng)*(HI-LO);
 }
 
 // This is a simple PRNG with a range of [0;1] using the gsl library

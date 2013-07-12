@@ -28,7 +28,7 @@ SRC_OBJECTS   := $(patsubst %.cc, $(DIR_OBJ)/%.o, $(SRC_LIB_CC))
 TEST_LIB_HH   := linalg.hh reduced-basis.hh
 TEST_LIB_CC   := $(patsubst %.hh, %.cc, $(TEST_LIB_HH))
 
-TEST_TARGET_CC:= test_runner.cc
+TEST_TARGET_CC:= test_runner.cc rb_generator_test.cc
 TEST_TARGET_OBJ:=$(patsubst %.cc, $(DIR_OBJ_T)/%.o, $(TEST_TARGET_CC))
 TEST_TARGET   := $(patsubst %.cc, %, $(TEST_TARGET_CC))
 
@@ -64,10 +64,10 @@ $(DIR_OBJ_T)/%.o: $(DIR_SRC_T)/%.cc
 	@$(COMPILER) -c $(CFLAGS) $< -o $@
 
 $(SRC_TARGET): $(SRC_TARGET_OBJ)
-	$(COMPILER) $(SRC_OBJECTS) obj/$@.o -Wall $(LIBS) -o $@
+	$(COMPILER) $(SRC_OBJECTS) $(DIR_OBJ)/$@.o -Wall $(LIBS) -o $@
 
 $(TEST_TARGET): $(TEST_TARGET_OBJ)
-	$(COMPILER) $(TEST_OBJECTS) $< -Wall $(LIBS) -o $@
+	$(COMPILER) $(TEST_OBJECTS) $(DIR_OBJ_T)/$@.o -Wall $(LIBS) -o $@
 
 .PRECIOUS: $(SRC_TARGET) $(SRC_OBJECTS) $(TEST_TARGET) $(TEST_OBJECTS)
 
