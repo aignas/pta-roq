@@ -14,6 +14,126 @@
 
     \chapter{Introduction}
 
+    \chapter{Background Theory}
+
+    In this chapter I will go through the context of this research as well as
+    derivations and definitions of some formulae and mathematical notation used
+    through this report.
+    %
+
+    \section{Pulsar Timing and Gravitational Wave Search}
+
+    Pulsars are highly predictable cosmic clocks, some of which rival even atomic
+    clocks <citation needed>.
+    %
+    At the moment there is an ongoing effort to establish collaborations between
+    many radio telescopes in order to make observations of pulsars across the
+    whole sky <citation needed>.
+    %
+    The so called International Pulsar Timing Array (IPTA) is precisely that.
+
+    The idea, that pulsars can be used for investigation of gravitational
+    waves by investigating correlated fluctuations of time of arrival (TOA)
+    measurements is not new <citation needed>.
+    %
+    However, only recently data analysis has been started as sufficient amount of
+    data has been gathered <citation needed>.
+    %
+    The main interest is in seeing whether the residuals of the timing model
+    carry any information of gravitational wave source and how to extract it
+    quickly.
+    %
+    The residual is defined as:
+    %
+    \begin{align}
+        \delta \vec{t} = t_{TOA} - t_{expected TOA}
+    \end{align}
+
+    The procedure is usually to observe the pulsars for a long time and choose
+    only the most precise, so called millisecond pulsars, which have a very low
+    and steady period and fit the TOAs to obtain the residuals.
+    %
+    Then the residuals need to be marginalised over the timing model parameters,
+    so that the actual data is independent of the fitting model.
+    %
+    However, the scope of this project is to develop a new way of processing the
+    marginalised residuals and hence we shall not concern ourselves with the
+    marginalisation of the fitting parameters at this stage and we will assume,
+    that the residuals are known to be exact within some error.
+
+    \section{The theoretical model for the signal}
+
+    % TODO I need to find a way to derive the used formula. Look at the Ellis
+    % paper and references, because he has done it well, IIRC...
+
+    \section{Search of single sources}
+
+    When the data is being processed, usually Markov Chain Monte Carlo (MCMC)
+    methods are chosen to maximise the Bayesian likelihood function.
+    %
+    The probability of noise defined as a multivariate Gaussian <citation
+    needed>:
+    %
+    \begin{align}
+        p \left( \vec{n} \right) = \cfrac{1}{\sqrt{\det 2\pi C}}
+        \exp{\left( - \frac{1}{2} \vec{n}^{T} C^{-1} \vec{n} \right) }
+    \end{align}
+    %
+    If we assume that our residuals consist of a signal and a noise, we can
+    rearrange the expression for noise:
+    %
+    \begin{align}
+        \vec{n} = \delta \vec{t} - \vec{h}
+    \end{align}
+    %
+    where $\vec{h}$ is the signal template which is being fitted.
+
+    The matrix $C$ in the inner product in the exponent is called covariance
+    matrix, which contains the information about the correlations between the
+    noise series $\vec{n}_i$ for each $i$th pulsar.
+    %
+    It is symmetric and the form of it can be rationalized as follows:
+    %
+    \begin{align}
+        C_{ij} = C^{GWB}_{ij} + C^{WN}_{ij} + C^{RN}_{ij} + C^{PLN}_{ij} =
+        /left< \vec{n}_i \vec{n}_j /right>
+    \end{align}
+    %
+    where the angular brackets denote the cross-correlation of the noise time
+    series from each pulsar <citation needed>.
+    %
+    As you can see from the same expression, the matrix has various contributions
+    from stochastic processes --- Gravitational Wave Background (GWB), the white
+    (WN), red (RN) and power-law noises (PLN) <citation needed>.
+
+    The matrix present in the inner product in the exponent makes them
+    particularly expensive to evaluate as the operation scales as $\bigo \left(
+    n^{3} \right)$, where $n$ is the dimensionality of the vectors.
+    %
+    Also, because of the fact, that the matrix needs to be inverted before
+    carrying out evaluations doesn't help either.
+
+    From now on, we shall use a shorthand notation for such inner products, by
+    employing the Dirac's bra-ket notation:
+    <formula needed>
+
+    FIXME finish the description...
+
+    \section{Reduced Order Modelling}
+
+    Reduced order modelling is not new and such methods rely on a single
+    assumption, that the dimensionality of the problem can be reduced by trying to
+    assess the information content.
+    %
+    Quite recently there was a paper published by <canizares citation needed>
+    which investigates such models in the context of LIGO <citation needed>
+    detector.
+    %
+    It relies on three crucial steps before the MCMC method application in the
+    maximization of the likelihood.
+
     \chapter{The Reduced Basis Construction}
 
 \end{document}
+
+% vim: tw=82:colorcolumn=83:spell:spelllang=en_gb
