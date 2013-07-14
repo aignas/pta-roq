@@ -136,6 +136,31 @@ void projectionResidualOptimized (dvec & projectee, std::vector<dvec> & set,
 
 }
 
+double projectionErrorStable (double projecteeNorm, dvec& projectee,
+                            std::vector<dvec> & set_hat,
+                            dvec & G, dvec & G_inv) {
+    unsigned int N = set.size();
+
+    dvec coef (N, 0);
+    dvec projections (N, 0);
+
+    // Parallelizable
+    for (unsigned int i = 0; i < N; i++) {
+        projections[i] = dotProduct(projectee, set_hat[i]);
+    }
+
+    // Calculate the coefficients, use BLAS
+    matrixVectorProduct(G_inv, projection, coef);
+
+    double error = projecteeNorm;
+
+    error -= 2 * dotProduct(coef, projections);
+    
+    error += innerProduct (coef, G, coef);
+
+    return error;
+}
+
 void linspace (std::vector<double> & array_out, double min, double max, const unsigned int N) {
     array_out.resize(N);
 

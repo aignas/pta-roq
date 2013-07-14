@@ -90,6 +90,11 @@ void projectionResidual (dvec & projectee, std::vector<dvec> & set,
 void projectionResidualOptimized (dvec & projectee, std::vector<dvec> & set, 
                          std::vector<dvec> & set_hat, dvec & G_inv);
 
+
+double projectionErrorStable (double projecteeNorm, dvec& projectee,
+                            std::vector<dvec> & set_hat,
+                            dvec & G, dvec & G_inv);
+
 /**
  * Norm of a vector
  *

@@ -26,7 +26,8 @@ void greedyReducedBasis (const unsigned long N,
     // Initialise an empty Grammaian, the parameter space and calculate the size of the
     // parameter space (total number of points)
 
-    std::vector<double> sigmaTrial (N, 0);
+    std::vector<double> sigmaTrial (N, 0),
+                        templateNorm (N, 0);
     std::vector<std::vector<double> > RB_out_hat;
     
     // Seed choice (arbitrary). We just randomize the first choice. We also select the
@@ -69,6 +70,16 @@ void greedyReducedBasis (const unsigned long N,
 
     std::vector<double> Grammian, Grammian_inv;
 
+    // Calculate the template norms.
+    // FIXME This will need to be stored in a file for likelyhood evaluations,
+    // because in this way I can ommit expensive inner products there and here
+    // I can't get away without calculating them, so it's a win/win situation.
+#pragma omp parallel for shared(sigma_trial, chunk) private(data, params_trial)
+    for (unsigned long i = 0; i < N; i++) {
+        (*getData)(i, params_trial, data);
+        templateNorm.at(i) = innerProduct (data, A, data);
+    }
+
     // The parameter space is large, so the computation will be expensive
     while (sigma_out.back() > epsilon) {
         // Construct the Gram matrix and its inverse
@@ -78,13 +89,14 @@ void greedyReducedBasis (const unsigned long N,
 
         unsigned long chunk = CHUNKSIZE;
 
-        // Stupidly traverse the entire parameter space
-        // Can we edit the ranges where we are searching by discarding regions in
-        // parameter space when we find the vectors? (Suggestion by Priscilla)
+        // FIXME Stupidly traverse the entire parameter space. Possible
+        // improvements:
+        //  * Do an MCMC search
         //
         // parallelize it with OpenMP
-#pragma omp parallel for shared(sigma_trial, chunk) private(data, params_trial)
+#pragma omp parallel for shared(sigma_trial, templateNorm, chunk) private(data, params_trial)
         for (unsigned long j = 0; j < N; j++) {
+            // Reset the error to zero
             sigma_trial.at(j) = 0;
 
             // Do not include the same point in the calculation
@@ -94,9 +106,9 @@ void greedyReducedBasis (const unsigned long N,
 
             (*getData)(j, params_trial, data);
 
-            projectionResidualOptimized (data, RB_out, RB_out_hat, Grammian_inv);
-
-            sigma_trial.at(j) = innerProduct (data, A, data);
+            
+            sigma_trial.at(j) = projectionErrorStable (templateNorm[j], data, 
+                    RB_out_hat, Grammian, Grammian_inv);
         }
         
         sigma_out.push_back(0);
