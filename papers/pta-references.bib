@@ -1,0 +1,163 @@
+@Comment{x-kbibtex-encoding=utf-8}
+
+@Comment{x-kbibtex-personnameformatting=<%f ><%l>< %s>}
+
+@Misc{1304.0462v1,
+	Abstract = "One of the main bottlenecks in gravitational wave (GW) astronomy is the high cost of performing parameter estimation and GW searches on the fly. We propose a novel technique based on Reduced Order Quadratures (ROQs), an application and data-specific quadrature rule, to perform fast and accurate likelihood evaluations. These are the dominant cost in Markov chain Monte Carlo (MCMC) algorithms, which are widely employed in parameter estimation studies, and so ROQs offer a new way to accelerate GW parameter estimation. We illustrate our approach using a four dimensional GW burst model embedded in noise. We build an ROQ for this model, and perform four dimensional MCMC searches with both the standard and ROQs quadrature rules, showing that, for this model, the ROQ approach is around 25 times faster than the standard approach with essentially no loss of accuracy. The speed-up from using ROQs is expected to increase for more complex GW signal models and therefore has significant potential to accelerate parameter estimation of GW sources such as compact binary coalescences.",
+	Archiveprefix = "arXiv",
+	Author = "Priscilla Canizares and Scott E. Field and Jonathan R. Gair and Manuel Tiglio",
+	Comment = "published = 2013-04-01T20:02:21Z, updated = 2013-04-01T20:02:21Z, 18 pages, 12 figures and 2 tables",
+	Eprint = "1304.0462v1",
+	Month = apr,
+	Primaryclass = "gr-qc",
+	Title = "{Gravitational wave parameter estimation with compressed likelihood evaluations}",
+	URL = "http://arxiv.org/abs/1304.0462v1; http://arxiv.org/pdf/1304.0462v1",
+	X-fetchedfrom = "arXiv.org",
+	Year = "2013"
+}
+
+@Misc{1204.4218v1,
+	Abstract = "Supermassive black hole binaries (SMBHBs) are expected to emit continuous gravitational waves in the pulsar timing array (PTA) frequency band ($10^{-9}$–$10^{-7}$ Hz). The development of data analysis techniques aimed at efficient detection and characterization of these signals is critical to the gravitational wave detection effort. In this paper we leverage methods developed for LIGO continuous wave gravitational searches, and explore the use of the $\mathcal{F}$-statistic for such searches in pulsar timing data. Babak \&amp; Sesana 2012 have already used this approach in the context of PTAs to show that one can resolve multiple SMBHB sources in the sky. Our work improves on several aspects of prior continuous wave search methods developed for PTA data analysis. The algorithm is implemented fully in the time domain, which naturally deals with the irregular sampling typical of PTA data and avoids spectral leakage problems associated with frequency domain methods. We take into account the fitting of the timing model, and have generalized our approach to deal with both correlated and uncorrelated colored noise sources. We also develop an incoherent detection statistic that maximizes over all pulsar dependent contributions to the likelihood. To test the effectiveness and sensitivity of our detection statistics, we perform a number of monte-carlo simulations. We produce sensitivity curves for PTAs of various configurations, and outline an implementation of a fully functional data analysis pipeline. Finally, we present a derivation of the likelihood maximized over the gravitational wave phases at the pulsar locations, which results in a vast reduction of the search parameter space.",
+	Archiveprefix = "arXiv",
+	Author = "Justin Ellis and Xavier Siemens and Jolien Creighton",
+	Comment = "published = 2012-04-18T22:22:33Z, updated = 2012-04-18T22:22:33Z, 11 pages, 5 figures",
+	Eprint = "1204.4218v1",
+	Month = apr,
+	Primaryclass = "astro-ph.IM",
+	Title = "{Optimal strategies for continuous gravitational wave detection in pulsar timing arrays}",
+	URL = "http://arxiv.org/abs/1204.4218v1; http://arxiv.org/pdf/1204.4218v1",
+	X-fetchedfrom = "arXiv.org",
+	Year = "2012"
+}
+
+@Misc{0809.0791v3,
+	Abstract = "Long-term precise timing of Galactic millisecond pulsars holds great promise for measuring the long-period (months-to-years) astrophysical gravitational waves. Several gravitational-wave observational programs, called Pulsar Timing Arrays (PTA), are being pursued around the world. Here we develop a Bayesian algorithm for measuring the stochastic gravitational-wave background (GWB) from the PTA data. Our algorithm has several strengths: (1) It analyses the data without any loss of information, (2) It trivially removes systematic errors of known functional form, including quadratic pulsar spin-down, annual modulations and jumps due to a change of equipment, (3) It measures simultaneously both the amplitude and the slope of the GWB spectrum, (4) It can deal with unevenly sampled data and coloured pulsar noise spectra. We sample the likelihood function using Markov Chain Monte Carlo (MCMC) simulations. We extensively test our approach on mock PTA datasets, and find that the algorithm has significant benefits over currently proposed counterparts. We show the importance of characterising all red noise components in pulsar timing noise by demonstrating that the presence of a red component would significantly hinder a detection of the GWB. Lastly, we explore the dependence of the signal-to-noise ratio on the duration of the experiment, number of monitored pulsars, and the magnitude of the pulsar timing noise. These parameter studies will help formulate observing strategies for the PTA experiments.",
+	Archiveprefix = "arXiv",
+	Author = "Rutger van Haasteren and Yuri Levin and Patrick McDonald and Tingting Lu",
+	Comment = "published = 2008-09-04T11:34:51Z, updated = 2009-02-11T15:49:42Z, 10 pages, 12 figures",
+	DOI = "10.1111/j.1365-2966.2009.14590.x",
+	Eprint = "0809.0791v3",
+	Localfile = "/home/gns-ank/Documents/2012-2013 Summer Project/PTA/papers/0809.0791v3.pdf",
+	Month = feb,
+	Primaryclass = "astro-ph",
+	Title = "{On measuring the gravitational-wave background using Pulsar Timing Arrays}",
+	URL = "http://arxiv.org/abs/0809.0791v3; http://arxiv.org/pdf/0809.0791v3",
+	X-fetchedfrom = "arXiv.org",
+	Year = "2009"
+}
+
+@Misc{1210.2396v1,
+	Abstract = "Pulsar timing arrays (PTAs) might detect gravitational waves (GWs) from massive black hole (MBH) binaries within this decade. The signal is expected to be an incoherent superposition of several nearly-monochromatic waves of different strength. The brightest sources might be individually resolved, and the overall deconvolved, at least partially, in its individual components. In this paper we extend the maximum-likelihood based method developed in Babak \&amp; Sesana 2012, to search for individual MBH binaries in PTA data. We model the signal as a collection of circular monochromatic binaries, each characterized by three free parameters: two angles defining the sky location, and the frequency. We marginalize over all other source parameters and we apply an efficient multi-search genetic algorithm to maximize the likelihood function and look for sources in synthetic datasets. On datasets characterized by white Gaussian noise plus few injected sources with signal-to-noise ratio (SNR) in the range 10-60, our search algorithm performs well, recovering all the injections with no false positives. Individual source SNRs are estimated within few \% of the injected values, sky locations are recovered within few degrees, and frequencies are determined with sub-Fourier bin precision.",
+	Archiveprefix = "arXiv",
+	Author = "Antoine Petiteau and Stanislav Babak and Alberto Sesana and Mariana de Araujo",
+	Comment = "published = 2012-10-08T20:00:03Z, updated = 2012-10-08T20:00:03Z, 12 pages, 4 figures, 1 table; submitted to Physical Review D",
+	Eprint = "1210.2396v1",
+	Month = oct,
+	Primaryclass = "astro-ph.CO",
+	Title = "{Resolving multiple supermassive black hole binaries with pulsar timing arrays II: genetic algorithm implementation}",
+	URL = "http://arxiv.org/abs/1210.2396v1; http://arxiv.org/pdf/1210.2396v1",
+	X-fetchedfrom = "arXiv.org",
+	Year = "2012"
+}
+
+@Misc{1210.6014v2,
+	Abstract = "We describe an analysis of the First International Pulsar Timing Array Data Challenge. We employ a robust, unbiased Bayesian framework developed by van Haasteren to study the three Open and Closed datasets, testing various models for each dataset and using MultiNest to recover the evidence for the purposes of Bayesian model-selection. The parameter constraints of the favoured model are confirmed using an adaptive MCMC technique. Our results for Closed1 favoured a gravitational-wave background with strain amplitude at f=1 yr-1, A, of (1.1 +/- 0.1) x 10^{-14}, power spectral-index gamma=4.30 +/- 0.15 and no evidence for red-timing noise or single-sources. The evidence for Closed2 favours a gravitational-wave background with A=(6.1 +/- 0.3) x 10^{-14}, gamma=4.34 +/- 0.09 with no red-timing noise or single-sources. Finally, the evidence for Closed3 favours the presence of red-timing noise and a gravitational-wave background, with no single-sources. The properties of the background were A=(5 +/- 1) x 10^{-15} and gamma=4.23 +/- 0.35, while the properties of the red-noise were N\_{red}=(12 +/- 4) ns and gamma\_{red}=1.5 +/- 0.3. In all cases the redness of the recovered background is consistent with a source-population of inspiraling supermassive black-hole binaries. We also investigate the effect that down-sampling of the datasets has on parameter constraints and run-time. Finally we provide a proof-of-principle study of the ability of the Bayesian framework used in this paper to reconstruct the angular correlation of gravitational-wave background induced timing-residuals, comparing this to the Hellings and Downs curve.",
+	Archiveprefix = "arXiv",
+	Author = "Stephen R. Taylor and Jonathan R. Gair and L. Lentati",
+	Comment = "published = 2012-10-22T19:37:12Z, updated = 2012-12-18T20:30:08Z, 20 pages, 13 figures, 6 tables. Updated with additional studies to reconstruct the Hellings and Downs curve, and to recover the GW-background spectrum. Submitted to PRD",
+	DOI = "10.1103/PhysRevD.87.044035",
+	Eprint = "1210.6014v2",
+	Month = dec,
+	Primaryclass = "astro-ph.IM",
+	Title = "{Weighing The Evidence For A Gravitational-Wave Background In The First International Pulsar Timing Array Data Challenge}",
+	URL = "http://arxiv.org/abs/1210.6014v2; http://arxiv.org/pdf/1210.6014v2",
+	X-fetchedfrom = "arXiv.org",
+	Year = "2012"
+}
+
+@Misc{1210.3489v1,
+	Abstract = "We provide brief notes on a particle swarm-optimisation approach to constraining the properties of a stochastic gravitational-wave background in the first International Pulsar Timing Array data-challenge. The technique employs many computational-agents which explore parameter space, remembering their most optimal positions and also sharing this information with all other agents. It is this sharing of information which accelerates the convergence of all agents to the global best-fit location in a very short number of iterations. Error estimates can also be provided by fitting a multivariate Gaussian to the recorded fitness of all visited points.",
+	Archiveprefix = "arXiv",
+	Author = "Stephen R. Taylor and Jonathan R. Gair and L. Lentati",
+	Comment = "published = 2012-10-12T12:18:02Z, updated = 2012-10-12T12:18:02Z, 6 pages, 1 figure, 1 table",
+	Eprint = "1210.3489v1",
+	Month = oct,
+	Primaryclass = "astro-ph.IM",
+	Title = "{Using Swarm Intelligence To Accelerate Pulsar Timing Analysis}",
+	URL = "http://arxiv.org/abs/1210.3489v1; http://arxiv.org/pdf/1210.3489v1",
+	X-fetchedfrom = "arXiv.org",
+	Year = "2012"
+}
+
+@Article{1210.3578v2,
+	Abstract = "A new model independent method is presented for the analysis of pulsar timing data and the estimation of the spectral properties of an isotropic gravitational wave background (GWB). We show that by rephrasing the likelihood we are able to eliminate the most costly aspects of computation normally associated with this type of data analysis. When applied to the International Pulsar Timing Array Mock Data Challenge data sets this results in speedups of approximately 2 to 3 orders of magnitude compared to established methods. We present three applications of the new likelihood. In the low signal to noise regime we sample directly from the power spectrum coefficients of the GWB signal realization. In the high signal to noise regime, where the data can support a large number of coefficients, we sample from the joint probability density of the power spectrum coefficients for the individual pulsars and the GWB signal realization. Critically in both these cases we need make no assumptions about the form of the power spectrum of the GWB, or the individual pulsars. Finally we present a method for characterizing the spatial correlation between pulsars on the sky, making no assumptions about the form of that correlation, and therefore providing the only truly general Bayesian method of confirming a GWB detection from pulsar timing data.",
+	Archiveprefix = "arXiv",
+	Author = "Lindley Lentati and Paul Alexander and Michael P. Hobson and Stephen Taylor and Jonathon Gair and Sreekumar T. Balan and Rutger van Haasteren",
+	Comment = "published = 2012-10-12T17:14:19Z, updated = 2013-06-25T17:37:17Z, 9 pages, 4 figures",
+	DOI = "10.1103/PhysRevD.87.104021",
+	Eprint = "1210.3578v2",
+	Month = jun,
+	Pages = "Physical Review D",
+	Primaryclass = "astro-ph.IM",
+	Title = "{Hyper-efficient model-independent Bayesian method for the analysis of pulsar timing data}",
+	URL = "http://arxiv.org/abs/1210.3578v2; http://arxiv.org/pdf/1210.3578v2",
+	X-fetchedfrom = "arXiv.org",
+	Year = "2013"
+}
+
+@Misc{1302.1903v1,
+	Abstract = "Direct detection of gravitational waves by pulsar timing arrays will become feasible over the next few years. In the low frequency regime ($10^{-7}$ Hz – $10^{-9}$ Hz), we expect that a superposition of gravitational waves from many sources will manifest itself as an isotropic stochastic gravitational wave background. Currently, a number of techniques exist to detect such a signal; however, many detection methods are computationally challenging. Here we introduce an approximation to the full likelihood function for a pulsar timing array that results in computational savings proportional to the square of the number of pulsars in the array. Through a series of simulations we show that the approximate likelihood function reproduces results obtained from the full likelihood function. We further show, both analytically and through simulations, that, on average, this approximate likelihood function gives unbiased parameter estimates for astrophysically realistic stochastic background amplitudes.",
+	Archiveprefix = "arXiv",
+	Author = "Justin Ellis and Xavier Siemens and Rutger van Haasteren",
+	Comment = "published = 2013-02-07T22:51:45Z, updated = 2013-02-07T22:51:45Z, 10 pages, 3 figures",
+	Eprint = "1302.1903v1",
+	Month = feb,
+	Primaryclass = "astro-ph.IM",
+	Title = "{An Efficient Approximation to the Likelihood for Gravitational Wave Stochastic Background Detection Using Pulsar Timing Data}",
+	URL = "http://arxiv.org/abs/1302.1903v1; http://arxiv.org/pdf/1302.1903v1",
+	X-fetchedfrom = "arXiv.org",
+	Year = "2013"
+}
+
+@Misc{1301.6673v1,
+	Abstract = {This is a summary of the methods we used to analyse the first IPTA Mock Data Challenge (MDC), and the obtained results. We have used a Bayesian analysis in the time domain, accelerated using the recently developed ABC-method which consists of a form of lossy linear data compression. The TOAs were first processed with Tempo2, where the design matrix was extracted for use in a subsequent Bayesian analysis. We used different noise models to analyse the datasets: no red noise, red noise the same for all pulsars, and individual red noise per pulsar. We sampled from the likelihood with four different samplers: "emcee", "t-walk", "Metropolis-Hastings", and "pyMultiNest". All but emcee agreed on the final result, with emcee failing due to artefacts of the high-dimensionality of the problem. An interesting issue we ran into was that the prior of all the 36 (red) noise amplitudes strongly affects the results. A flat prior in the noise amplitude biases the inferred GWB amplitude, whereas a flat prior in log-amplitude seems to work well. This issue is only apparent when using a noise model with individually modelled red noise for all pulsars. Our results for the blind challenges are in good agreement with the injected values. For the GWB amplitudes we found h\_c = 1.03 +/- 0.11 [10^{-14}], h\_c = 5.70 +/- 0.35 [10^{-14}], and h\_c = 6.91 +/- 1.72 [10^{-15}], and for the GWB spectral index we found gamma = 4.28 +/- 0.20, gamma = 4.35 +/- 0.09, and gamma = 3.75 +/- 0.40. We note that for closed challenge 3 there was quite some covariance between the signal and the red noise: if we constrain the GWB spectral index to the usual choice of gamma = 13/3, we obtain the estimates: h\_c = 10.0 +/- 0.64 [10^{-15}], h\_c = 56.3 +/- 2.42 [10^{-15}], and h\_c = 4.83 +/- 0.50 [10^{-15}], with one-sided 2 sigma upper-limits of: h\_c \&lt;= 10.98 [10^{-15}], h\_c \&lt;= 60.29 [10^{-15}], and h\_c \&lt;= 5.65 [10^{-15}].},
+	Archiveprefix = "arXiv",
+	Author = "Rutger van Haasteren and Chiara M. F. Mingarelli and Alberto Vecchio and Antoine Lassus",
+	Comment = "published = 2013-01-28T20:56:32Z, updated = 2013-01-28T20:56:32Z, 10 pages, 5 figures",
+	Eprint = "1301.6673v1",
+	Month = jan,
+	Primaryclass = "astro-ph.IM",
+	Title = "{Analysis of the first IPTA Mock Data Challenge by the EPTA timing data analysis working group}",
+	URL = "http://arxiv.org/abs/1301.6673v1; http://arxiv.org/pdf/1301.6673v1",
+	X-fetchedfrom = "arXiv.org",
+	Year = "2013"
+}
+
+@Misc{1201.6641v1,
+	Abstract = "We present an analysis of high-precision pulsar timing data taken as part of the North American Nanohertz Observatory for Gravitational waves (NANOGrav) project. We have observed 17 pulsars for a span of roughly five years using the Green Bank and Arecibo radio telescopes. We analyze these data using standard pulsar timing models, with the addition of time-variable dispersion measure and frequency-variable pulse shape terms. Sub-microsecond timing residuals are obtained in nearly all cases, and the best root-mean-square timing residuals in this set are ~30-50 ns. We present methods for analyzing post-fit timing residuals for the presence of a gravitational wave signal with a specified spectral shape. These optimally take into account the timing fluctuation power removed by the model fit, and can be applied to either data from a single pulsar, or to a set of pulsars to detect a correlated signal. We apply these methods to our dataset to set an upper limit on the strength of the nHz-frequency stochastic supermassive black hole gravitational wave background of h\_c (1 yr^-1) \&lt; 7x10^-15 (95\%). This result is dominated by the timing of the two best pulsars in the set, PSRs J1713+0747 and J1909-3744.",
+	Archiveprefix = "arXiv",
+	Author = "P. B. Demorest and R. D. Ferdman and M. E. Gonzalez and D. Nice and S. Ransom and I. H. Stairs and Z. Arzoumanian and A. Brazier and S. Burke-Spolaor and S. J. Chamberlin and J. M. Cordes and J. Ellis and L. S. Finn and P. Freire and S. Giampanis and F. Jenet and V. M. Kaspi and J. Lazio and A. N. Lommen and M. McLaughlin and N. Palliyaguru and D. Perrodin and R. M. Shannon and X. Siemens and D. Stinebring and J. Swiggum and W. W. Zhu",
+	Comment = "published = 2012-01-31T18:30:33Z, updated = 2012-01-31T18:30:33Z, To be submitted to ApJ",
+	Eprint = "1201.6641v1",
+	Month = jan,
+	Primaryclass = "astro-ph.CO",
+	Title = "{Limits on the Stochastic Gravitational Wave Background from the North American Nanohertz Observatory for Gravitational Waves}",
+	URL = "http://arxiv.org/abs/1201.6641v1; http://arxiv.org/pdf/1201.6641v1",
+	X-fetchedfrom = "arXiv.org",
+	Year = "2012"
+}
+
+@Misc{1008.1782v2,
+	Abstract = "Pulsar timing is a promising technique for detecting low frequency sources of gravitational waves. Historically the focus has been on the detection of diffuse stochastic backgrounds, such as those formed from the superposition of weak signals from a population of binary black holes. More recently, attention has turned to members of the binary population that are nearer and brighter, which stand out from the crowd and can be individually resolved. Here we show that the timing data from an array of pulsars can be used to recover the physical parameters describing an individual black hole binary to good accuracy, even for moderately strong signals. A novel aspect of our analysis is that we include the distance to each pulsar as a search parameter, which allows us to utilize the full gravitational wave signal. This doubles the signal power, improves the sky location determination by an order of magnitude, and allows us to extract the mass and the distance to the black hole binary.",
+	Archiveprefix = "arXiv",
+	Author = "Vincent Corbin and Neil J. Cornish",
+	Comment = "published = 2010-08-10T20:00:01Z, updated = 2010-08-16T23:04:25Z, 10 pages, 9 figures, references updated",
+	Eprint = "1008.1782v2",
+	Month = aug,
+	Primaryclass = "astro-ph.HE",
+	Title = "{Pulsar Timing Array Observations of Massive Black Hole Binaries}",
+	URL = "http://arxiv.org/abs/1008.1782v2; http://arxiv.org/pdf/1008.1782v2",
+	X-fetchedfrom = "arXiv.org",
+	Year = "2010"
+}
+
