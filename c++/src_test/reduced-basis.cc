@@ -3,6 +3,7 @@
 
 #include "../src/reduced-basis.hh"
 #include "../src/linalg.hh"
+#include "../src/random-helper.hh"
 
 //////////////////////
 // This is needed for the test_greedyReducedBasis
@@ -53,40 +54,50 @@ int test_idToList () {
 }
 
 int test_greedyReducedBasis () {
-    std::vector<std::vector<double> > RB, RB_param;
+    // The dimensions of the vector space
+    unsigned N = 15;
 
-    // A unit matrix and the error array
-    std::vector<double> A = {1,0,0,0,1,0,0,0,1}, sigma;
-
-    // Initialize some vectors in 3D
+    // Initialize some vectors in N-D
     TestG::dataSpace.clear();
-    TestG::dataSpace.push_back({1,0,0});
-    TestG::dataSpace.push_back({2,0,0});
-    TestG::dataSpace.push_back({1,3,0});
-    TestG::dataSpace.push_back({0,0,10});
-    TestG::dataSpace.push_back({0,3,0});
-    TestG::dataSpace.push_back({0,3,7});
-
-    int N = TestG::dataSpace.size();
-    linspace(TestG::paramSpace.at(0), 0, 1, N);
-
-    greedyReducedBasis (N, getTestData, A, 0.000000001, RB_param, RB, sigma, false);
-
-    int r = 0;
-
-    if (not (RB.size() == 4 or RB.size() == 3)) {
-        r++;
+    for (unsigned i = 0; i < N*15; i++) {
+        std::vector<double> tmp (N);
+        for (unsigned j = 0; j < N; j++) {
+            tmp.at(j) = random_uniform (-30, 30);
+        }
+        TestG::dataSpace.push_back(tmp);
     }
 
-    return r;
+    for (unsigned i = 0; i < 15; i++) {
+        std::cout << random_uniform() << " ";
+    }
+    std::cout << std::endl;
+
+    linspace(TestG::paramSpace.at(0), 0, 1, N*15);
+
+    // Set the error
+    const double epsilon = 1e-24;
+
+    // Generate some symmetric matrix:
+    std::vector<double> A (N*N);
+
+    for (unsigned i = 0; i < N; i++) {
+        //A.at(i*(N + 1)) = 1./random_uniform (1, 100);
+        A.at(i*(N + 1)) = 1;
+    }
+
+    // Generate a residual vector
+    std::vector<std::vector<double> > RB_params, RB;
+    std::vector<double> sigma;
+    greedyReducedBasis (TestG::dataSpace.size(), getTestData, A, epsilon, RB_params, RB, sigma, true);
+
+    random_uniform_free();
+
+    return 0;
 }
 
 void getTestData (unsigned long idx, std::vector<double> & params_out, std::vector<double> & data_out) {
     params_out.resize(1);
     params_out[0] = idx;
 
-    data_out.resize(3);
-    data_out[0] = TestG::dataSpace.at(idx)[0];
-    data_out[1] = TestG::dataSpace.at(idx)[1];
-    data_out[2] = TestG::dataSpace.at(idx)[2];
+    data_out = TestG::dataSpace.at(idx);
 }
