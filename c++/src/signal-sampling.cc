@@ -11,7 +11,6 @@ void generateSample (std::vector<double>& out, std::vector<Pulsar> &pulsars,
                      std::vector<unsigned short>& indices, std::vector<double>& Times,
                      std::vector<std::vector<double> > &sources,
                      bool noise) { 
-    Pulsar pulsar;
     const unsigned int N = indices.size();
 
     if (out.size() != N) {
@@ -20,7 +19,7 @@ void generateSample (std::vector<double>& out, std::vector<Pulsar> &pulsars,
 
     // Start collecting the data
     for (unsigned int i = 0; i < N; i++) {
-        out[i] = residual(Times[i], indices[i], sources, pulsar, noise);
+        out[i] = residual(Times[i], indices[i], sources, pulsars.at(indices[i]), noise);
     }
 }
 
@@ -30,7 +29,7 @@ void genCovarianceMatrix (std::vector<double> & matrix, std::vector<Pulsar> & pu
     unsigned int N = indices.size();
 
     // Initiate a zero matrix
-    matrix.resize(N*N);
+    matrix = std::vector<double> (N*N, 0);
 
     // Set the low frequency cutoff by dividing frequency error by the time of the
     // measurement
@@ -91,7 +90,7 @@ void genCovarianceMatrix (std::vector<double> & matrix, std::vector<Pulsar> & pu
     }
 
     // Invert the matrix, as we do not need the other bit
-    inverse(matrix);
+    inverseATLASOverwrite(matrix);
 }
 
 // Calculate red noise Lorentzian terms (i.e. red noise)

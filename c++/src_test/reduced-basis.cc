@@ -55,11 +55,11 @@ int test_idToList () {
 
 int test_greedyReducedBasis () {
     // The dimensions of the vector space
-    unsigned N = 15;
+    unsigned N = 16;
 
     // Initialize some vectors in N-D
     TestG::dataSpace.clear();
-    for (unsigned i = 0; i < N*15; i++) {
+    for (unsigned i = 0; i < N*5; i++) {
         std::vector<double> tmp (N);
         for (unsigned j = 0; j < N; j++) {
             tmp.at(j) = random_uniform (-30, 30);
@@ -92,7 +92,14 @@ int test_greedyReducedBasis () {
 
     random_uniform_free();
 
-    return 0;
+    int r = 0;
+
+    std::cout << RB.size() << std::endl;
+    if (not (RB.size() == N or RB.size() == N + 1) or RB.size() == N + 2) {
+        r++;
+    }
+
+    return r;
 }
 
 void getTestData (unsigned long idx, std::vector<double> & params_out, std::vector<double> & data_out) {

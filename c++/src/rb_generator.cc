@@ -43,7 +43,7 @@ int main() {
     const double week = 7 * 3600 * 24,
                  year = 52 * week,
 
-                 t_final = 5 * year,
+                 t_final = 3 * year,
                  dt_min = 2 * week,
                  dt_max = 2 * week;
 
@@ -58,13 +58,13 @@ int main() {
     // Construct the parameter space
     G::params.resize(8);
     linspace(G::params[0], 1,1,1);
-    linspace(G::params[1], 1e9, 1e9, 1);
+    linspace(G::params[1], 1e19, 1e19, 1);
     linspace(G::params[2], 0.1, 0.3, 1);
     linspace(G::params[3], 0.1, 0.3, 1);
     linspace(G::params[4], 0.1, 0.3, 1);
-    linspace(G::params[5], 1.2, 1.5, 10);
-    linspace(G::params[6], -0.2, 0.2, 10);
-    linspace(G::params[7], 5.0e-9, 1.0e-8, 30);
+    linspace(G::params[5], 0.0, 3, 100);
+    linspace(G::params[6], -3, 3, 100);
+    linspace(G::params[7], 1.0e-9, 1.0e-8, 30);
 
     // Construct the dimensionalities vector
     unsigned long totalNumber = 1;

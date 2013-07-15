@@ -1,8 +1,8 @@
 MAKEDIR_P = mkdir -p
 
-LIBS = -lgsl -L/usr/global/intel/mkl/10.2.6.038/lib/em64t \
+#LIBS = -lgsl -L/usr/global/intel/mkl/10.2.6.038/lib/em64t \
 	   -lmkl_lapack -lmkl_intel_lp64 -lmkl_core -lmkl_sequential
-#LIBS = -lgsl -L/usr/lib64/atlas/ -lcblas -llapack -latlas
+LIBS = -lgsl -L/usr/lib64/atlas/ -lcblas -lclapack -latlas
 COMPILER = g++ -fopenmp
 CFLAGS = -g -std=c++11 -pedantic -Wall -O3
 
@@ -15,8 +15,8 @@ DIR_OBJ_T = obj_test
 .PHONY: compile debug_compile clean
 
 # Manually write down the headers and the main program files
-SRC_LIB_HH    := linalg.hh pulsar.hh signal-model.hh signal-vectors.hh signal-sampling.hh random-helper.hh reduced-basis.hh
-SRC_LIB_CC    := $(patsubst %.hh, %.cc, $(SRC_LIB_HH))
+SRC_LIB_HH    := $(shell find $(DIR_SRC) -name *.hh)
+SRC_LIB_CC    := $(patsubst $(DIR_SRC)/%.hh, %.cc, $(SRC_LIB_HH))
 
 SRC_TARGET_CC := data_generator.cc rb_generator.cc
 SRC_TARGET_OBJ:= $(patsubst %.cc, $(DIR_OBJ)/%.o, $(SRC_TARGET_CC))
@@ -28,7 +28,7 @@ SRC_OBJECTS   := $(patsubst %.cc, $(DIR_OBJ)/%.o, $(SRC_LIB_CC))
 TEST_LIB_HH   := linalg.hh reduced-basis.hh
 TEST_LIB_CC   := $(patsubst %.hh, %.cc, $(TEST_LIB_HH))
 
-TEST_TARGET_CC:= test_runner.cc rb_generator_test.cc
+TEST_TARGET_CC:= test_runner.cc
 TEST_TARGET_OBJ:=$(patsubst %.cc, $(DIR_OBJ_T)/%.o, $(TEST_TARGET_CC))
 TEST_TARGET   := $(patsubst %.cc, %, $(TEST_TARGET_CC))
 

@@ -2,9 +2,11 @@
 #include <vector>
 #include <iostream>
 
-#include "pulsar.hh"
 #include "linalg.hh"
 #include "random-helper.hh"
+#include "output-helper.hh"
+
+#include "pulsar.hh"
 #include "signal-sampling.hh"
 
 #include "reduced-basis.hh"
@@ -32,25 +34,23 @@ void greedyReducedBasis (const unsigned long N,
     
     // Seed choice (arbitrary). We just randomize the first choice. We also select the
     // first error arbitrary. This is just to have the same dimensions of two arrays
-    std::vector<double> sigma_trial (N, 0);
-
-    //std::vector<long> RB_N {random_uniform_int(0, N)};
-    std::vector<long> RB_N {0};
+    std::vector<long> RB_N {random_uniform_int(0, N)};
+    //std::vector<long> RB_N {0};
 
     // Randomize the first basis
     sigma_out.resize(0);
     RB_out.resize(0);
     RB_param_out.resize(0);
 
-    // Allocate some memory to params_trial and data arrays
-    std::vector<double> params_trial, data;
+    // Allocate some memory to paramsTrial and data arrays
+    std::vector<double> paramsTrial, data;
 
     // Get data and parameters
-    (*getData)(RB_N[0], params_trial, data);
+    (*getData)(RB_N[0], paramsTrial, data);
 
     // Push back the values
-    sigma_out.push_back(1000);
-    RB_param_out.push_back(params_trial);
+    sigma_out.push_back(100);
+    RB_param_out.push_back(paramsTrial);
     RB_out.push_back(data);
     RB_out_hat.push_back(data);
     matrixVectorProduct (A, RB_out.back(), RB_out_hat.back());
@@ -58,81 +58,90 @@ void greedyReducedBasis (const unsigned long N,
     // Output if demanded
     if (verbose) {
         std::cout << "N, id, error, p1, p2, p3, p4, p5, p6, p7, p8" << std::endl;
-        std::cout << sigma_out.size() << ", " << RB_N.back() << ", " << sigma_out.back();
-        for (unsigned j = 0; j < RB_param_out.back().size(); j++) {
-            std::cout << ", " << RB_param_out.back().at(j);
-        }
-        std::cout << std::endl;
     }
-    // Lets have a counter, which would mean that we search for basis even if epsilon
-    // goes very small
-    unsigned counter = 0;
 
-    std::vector<double> Grammian, Grammian_inv;
+    unsigned long chunk = CHUNKSIZE;
 
     // Calculate the template norms.
     // FIXME This will need to be stored in a file for likelyhood evaluations,
     // because in this way I can ommit expensive inner products there and here
     // I can't get away without calculating them, so it's a win/win situation.
-#pragma omp parallel for shared(sigma_trial, chunk) private(data, params_trial)
+#pragma omp parallel shared(templateNorm, chunk) private(data, paramsTrial)
+    {
+#pragma omp for
     for (unsigned long i = 0; i < N; i++) {
-        (*getData)(i, params_trial, data);
+        (*getData)(i, paramsTrial, data);
         templateNorm.at(i) = innerProduct (data, A, data);
     }
+    } 
+
+    std::vector<double> Grammian, Grammian_inv;
 
     // The parameter space is large, so the computation will be expensive
     while (sigma_out.back() > epsilon) {
+        // // Normalize the basis vectors:
+        // double alpha = sqrt(templateNorm.at(RB_N.back()));
+        // for (unsigned int j = 0; j < RB_out.back().size(); j++) {
+        //     RB_out.back()[j] /= alpha;
+        //     RB_out_hat.back()[j] /= alpha;
+        // }
+        
+        // Output if demanded
+        if (verbose) {
+            std::cout << sigma_out.size() << ", " << RB_N.back() << ", " << sigma_out.back() << ", ";
+            outputVector (RB_param_out.back(), ", ");
+            std::cout << std::endl;
+        }
+
         // Construct the Gram matrix and its inverse
         // FIXME Use the previous Grammian to just extend it?
-        extendGrammianOptimized (Grammian, Grammian_inv, RB_out, RB_out_hat);
-        //constructGrammianOptimized (Grammian, RB_out, RB_out_hat);
+        extendGrammianOptimized (Grammian, RB_out, RB_out_hat);
 
-        unsigned long chunk = CHUNKSIZE;
+        // Check if the grammian is invertible
+        int i = inverseATLAS(Grammian, Grammian_inv);
+        if (i != 0) {
+            std::cout << "The grammian is not invertible anymore, there is redundancy in the basis set" << std::endl;
+            // Remove the last vectors
+            RB_param_out.pop_back();
+            RB_out.pop_back();
+            break;
+        }
 
         // FIXME Stupidly traverse the entire parameter space. Possible
         // improvements:
         //  * Do an MCMC search
         //
         // parallelize it with OpenMP
-#pragma omp parallel for shared(sigma_trial, templateNorm, chunk) private(data, params_trial)
+#pragma omp parallel shared(sigmaTrial, templateNorm, chunk, Grammian, Grammian_inv, RB_out_hat, RB_N) private(data, paramsTrial)
+        {
+#pragma omp for
         for (unsigned long j = 0; j < N; j++) {
             // Reset the error to zero
-            sigma_trial.at(j) = 0;
+            sigmaTrial.at(j) = 0;
 
-            // Do not include the same point in the calculation
-            if (arrayContainsLong(j, RB_N)) {
-                continue;
-            }
-
-            (*getData)(j, params_trial, data);
+            (*getData)(j, paramsTrial, data);
 
             
-            sigma_trial.at(j) = projectionErrorStable (templateNorm[j], data, 
+            sigmaTrial.at(j) = projectionErrorStable (templateNorm[j], data, 
                     RB_out_hat, Grammian, Grammian_inv);
         }
-        
+        }
+
+        // Add the max and argmax of sigmaTrial
         sigma_out.push_back(0);
         RB_N.push_back(0);
-
-        findMax(sigma_trial, RB_N.back(), sigma_out.back());
+        findMax(sigmaTrial, RB_N.back(), sigma_out.back());
 
         // Add the lambda_i, which was found by maximizing the error
-        (*getData)(RB_N.back(), params_trial, data);
+        (*getData)(RB_N.back(), paramsTrial, data);
 
-        RB_param_out.push_back(params_trial);
+        RB_param_out.push_back(paramsTrial);
         RB_out.push_back(data);
-        RB_out_hat.push_back(data);
+        
         // Multiply one of the basis vectors with the covariance matrix
-        matrixVectorProduct (A, RB_out.back(), RB_out_hat.back());
+        RB_out_hat.push_back(data);
+        matrixVectorProduct (A, data, RB_out_hat.back());
 
-        // Output if demanded
-        if (verbose) {
-            std::cout << sigma_out.size() << ", " << RB_N.back() << ", " << sigma_out.back();
-            for (unsigned j = 0; j < RB_param_out.back().size(); j++) {
-                std::cout << ", " << RB_param_out.back().at(j);
-            }
-            std::cout << std::endl;
-        }
     }
 
     // Free the memory occupied by the PRNG

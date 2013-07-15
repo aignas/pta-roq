@@ -3,12 +3,13 @@
 // http://www.lindonslog.com/programming/atlas-blas-lapack-linear-algebra-libraries/
 extern "C" {
 #include <cblas.h>
-    // LU decomoposition of a general matrix
-    void dgetrf_(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
-
-    // generate inverse of a matrix given its LU decomposition
-    void dgetri_(int* N, double* A, int* lda, int* IPIV, double* WORK, int*
-            lwork, int* INFO);
+#include <clapack.h>
+//    // LU decomoposition of a general matrix
+//    void dgetrf_(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
+//
+//    // generate inverse of a matrix given its LU decomposition
+//    void dgetri_(int* N, double* A, int* lda, int* IPIV, double* WORK, int*
+//            lwork, int* INFO);
 }
 
 // Local linear algebra routines to abstract things
@@ -46,10 +47,9 @@ double innerProduct(dvec& x, dvec& A, dvec& y) {
     return r;
 }
 
-void extendGrammianOptimized (dvec &G, dvec& G_inv, std::vector<dvec>& set, std::vector<dvec>& set_hat) {
+void extendGrammianOptimized (dvec &G, std::vector<dvec>& set, std::vector<dvec>& set_hat) {
     // Assign the old matrix to the new one
     unsigned int N = set.size();
-    G_inv.resize(N*N);
 
     double tmp = 0;
     // We are extending the grammian in a clever way
@@ -61,10 +61,6 @@ void extendGrammianOptimized (dvec &G, dvec& G_inv, std::vector<dvec>& set, std:
 
     tmp = dotProduct(set[N-1], set_hat[N-1]);
     G.push_back(tmp);
-
-    G_inv = G;
-
-    inverse(G_inv);
 }
 
 void constructGrammianOptimized (dvec &G, std::vector<dvec>& set, std::vector<dvec>& set_hat) {
@@ -126,11 +122,9 @@ void projectionResidualOptimized (dvec & projectee, std::vector<dvec> & set,
     for (unsigned int i = 0; i < N; i++) {
         c_i = 0;
         for (unsigned int j = 0; j < N; j++) {
-            // FIXME check for overflow/underflow
             c_i += G_inv[j + i*N] * dotProduct(projectee, set_hat[j]);
         }
 
-        // FIXME check for overflow/underflow
         axpyProduct(- c_i, set[i], projectee);
     }
 
@@ -139,10 +133,10 @@ void projectionResidualOptimized (dvec & projectee, std::vector<dvec> & set,
 double projectionErrorStable (double projecteeNorm, dvec& projectee,
                             std::vector<dvec> & set_hat,
                             dvec & G, dvec & G_inv) {
-    unsigned int N = set.size();
+    unsigned int N = set_hat.size();
 
-    dvec coef (N, 0);
-    dvec projections (N, 0);
+    dvec coef (N, 0),
+         projections (N, 0);
 
     // Parallelizable
     for (unsigned int i = 0; i < N; i++) {
@@ -150,15 +144,9 @@ double projectionErrorStable (double projecteeNorm, dvec& projectee,
     }
 
     // Calculate the coefficients, use BLAS
-    matrixVectorProduct(G_inv, projection, coef);
+    matrixVectorProduct(G_inv, projections, coef);
 
-    double error = projecteeNorm;
-
-    error -= 2 * dotProduct(coef, projections);
-    
-    error += innerProduct (coef, G, coef);
-
-    return error;
+    return projecteeNorm - 2 * dotProduct(coef, projections) + innerProduct (coef, G, coef);
 }
 
 void linspace (std::vector<double> & array_out, double min, double max, const unsigned int N) {
@@ -187,21 +175,44 @@ void linspace (std::vector<double> & array_out, double min, double max, const un
     }
 }
 
-void inverse (std::vector<double> & A) {
+int inverse (std::vector<double> & A) {
     int N = sqrt(A.size());
 
     int INFO;
 
-    std::vector<int> IPIV (N+1);
+    std::vector<int> IPIV (N);
     int LWORK = A.size();
     std::vector<double> WORK (LWORK);
 
     // Execute the LAPACK routines
-    dgetrf_(&N, &N, &A[0], &N, &IPIV[0], &INFO);
-    dgetri_(&N, &A[0], &N, &IPIV[0], &WORK[0], &LWORK, &INFO);
+    //dgetrf_(&N, &N, &A[0], &N, &IPIV[0], &INFO);
+    //dgetri_(&N, &A[0], &N, &IPIV[0], &WORK[0], &LWORK, &INFO);
 
     IPIV.clear();
     WORK.clear();
+
+    return INFO;
+}
+
+int inverseATLASOverwrite (std::vector<double> & A) {
+    int N = sqrt(A.size()), info1, info2;
+    std::vector<int> IPIV (N, 0);
+
+    // Execute the LAPACK routines
+    info1 = clapack_dgetrf(CblasRowMajor, N, N, &A[0], N, &IPIV[0]);
+    info2 = clapack_dgetri(CblasRowMajor, N,    &A[0], N, &IPIV[0]);
+
+    if (not (info1 == 0 and info2 == 0) ) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+int inverseATLAS (std::vector<double> & A, std::vector<double> & A_out) {
+    A_out = A;
+
+    inverseATLASOverwrite (A_out);
 }
 
 int arrayEqual (dvec &x, dvec &y) {

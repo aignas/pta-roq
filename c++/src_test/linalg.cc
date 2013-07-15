@@ -37,7 +37,7 @@ int test_innerProduct () {
 int test_inverse () {
     std::vector<double> A = {1, 2, 0, 4}, A_answer = {1, -0.5, 0, 0.25};
 
-    inverse(A);
+    inverseATLASOverwrite(A);
 
     return arrayEqual(A, A_answer);
 }

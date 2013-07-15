@@ -64,7 +64,7 @@ void constructGrammianOptimized (dvec &G, std::vector<dvec>& set, std::vector<dv
  * @param set A set of basis vectors
  * @param set_hat A set of basis vectors premultiplied with the innerproduct matrix
  */
-void extendGrammianOptimized (dvec &G, dvec &G_inv, std::vector<dvec>& set, std::vector<dvec>& set_hat);
+void extendGrammianOptimized (dvec &G, std::vector<dvec>& set, std::vector<dvec>& set_hat);
 
 /**
  * Project a vector onto basis vectors
@@ -121,7 +121,17 @@ void linspace (dvec & array_out, double min, double max, const unsigned int N);
  * @param A a matrix with Row Major arrangement
  * @param A_inv The output (i.e. container for the inverse);
  */
-void inverse (dvec & A);
+int inverse (dvec & A);
+
+/**
+ * Invert a matrix, use CLapack
+ *
+ * @param A a matrix with Row Major arrangement
+ * @param A_out The output (i.e. container for the inverse);
+ */
+int inverseATLAS (std::vector<double> & A, std::vector<double> & A_out);
+
+int inverseATLASOverwrite (std::vector<double> & A);
 
 /**
  * Check if arrays containing double are equal

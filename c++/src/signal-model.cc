@@ -150,7 +150,7 @@ double individualSource (const double t, dvec& params, const double L, dvec& pUV
 
     if (fabs(extrinsic[0]) <  1e-31) {
         throw "Error: The chirp mass of the source is too low";
-    } else if (fabs(extrinsic[0]) < 1e-31) {
+    } else if (fabs(extrinsic[1]) < 1e-31) {
         throw "Error: The distance to the source is too low";
     } else if (fabs(intrinsic[0]) < 1e-31) {
         throw "Error: The azimuthal angle is close to the coordinate singularity";
