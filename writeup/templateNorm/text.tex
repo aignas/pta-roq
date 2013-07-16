@@ -1,0 +1,90 @@
+\documentclass{scrartcl}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage{amsmath, amssymb}
+
+%\usepackage[
+    %backend=biber,
+    %style=numeric
+%]{biblatex}
+
+%\addbibresource{../papers/pta-references.bib}
+
+\newcommand{\bigo}[1]{\ensuremath{\mathcal{O}\left( #1 \right)}}
+\renewcommand{\vec}[1]{\ensuremath{\mathbf{#1}}}
+\newcommand{\arr}[1]{\ensuremath{\mathrm{#1}}}
+
+% bra ket notation macros
+\newcommand{\bra}[1]{\ensuremath{\left\langle#1\right|}}
+\newcommand{\ket}[1]{\ensuremath{\left|#1\right\rangle}}
+\newcommand{\braket}[2]{\ensuremath{\left\langle #1 \middle| #2 \right\rangle}}
+\newcommand{\norm}[1]{\ensuremath{\left|\left| #1 \right|\right|}}
+\newcommand{\matrixel}[3]{\ensuremath{\left\langle #1 \middle| #2 \middle| #3 \right\rangle}}
+
+\author{Ignas Anikevičius}
+\title{Efficient template norm calculation}
+
+\begin{document}
+    \maketitle
+
+    These are some notes on the Norm of the signal template present in the
+    likelihood calculations.
+
+    \begin{equation}
+        \ln p = -\cfrac{1}{2} \braket{\delta\vec{t}}{\delta\vec{t}} 
+        + \braket{\delta\vec{t}}{\vec{h}} 
+        -\cfrac{1}{2} \braket{\vec{h}}{\vec{h}}
+    \end{equation}
+
+    The last term can be precalculated when we are searching for the reduced
+    bases.
+    %
+    This is because when we are evaluating how well the RB spans the signal
+    template space, we calculate the following:
+    %
+    \begin{equation}
+        \norm{\vec{h} - \sum_{i} c_{i} \vec{e}_{i}}^{2}
+    \end{equation}
+    %
+    which could be expanded as:
+    %
+    \begin{equation}
+        \norm{\vec{h}}^{2}
+        - 2 \braket{\vec{h}}{\sum_{i} c_{i} \vec{e}_{i}}
+        + \norm{\sum_{i} c_{i} \vec{e}_{i}}^2
+        =
+        \norm{\vec{h}}^{2}
+        - 2 \sum_{i} c_{i} \braket{\vec{h}}{\vec{e}_{i}}
+        + \sum_{i,j} \mathcal{G}_{ij} c_{i} c_{j} 
+    \end{equation}
+    %
+    where $\mathcal{G}$ is the grammian matrix and $c_i$ are projection
+    coeficients.
+
+    This is important, because we reduce the order of calculations as the first
+    term can be precomputed before the parameter search, the inner product of the
+    second term is used when calculating the $c_{i}$, which means, that we can
+    express this as folows:
+    %
+    \begin{equation}
+        \norm{\vec{h}}^{2}
+        - 2 \sum_{i,j} \mathcal{G}^{-1}_{ij} \widetilde{c}_{i} \widetilde{c}_{j}
+        + \sum_{i,j,k,l} \mathcal{G}_{ij} \mathcal{G}^{-1}_{jk}  \mathcal{G}^{-1}_{il} \widetilde{c}_{i} \widetilde{c}_{j}
+        =
+        \norm{\vec{h}}^{2}
+        - \sum_{i,j} \mathcal{G}^{-1}_{ij} \widetilde{c}_{i} \widetilde{c}_{j}
+    \end{equation}
+    %
+    where
+    \begin{align}
+        \widetilde{c}_{i} = \braket{\vec{h}}{\vec{e}_{i}}
+    \end{align}
+
+    I am not sure about the last result, but if this is true, then the speedups
+    should be immense.
+
+\end{document}
+
+% vim: tw=82:colorcolumn=83:spell:spelllang=en_gb
