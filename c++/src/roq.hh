@@ -1,8 +1,4 @@
-
 #include <vector>
-#include <valarray>
-
-#include "pulsar.hh"
 
 /**
  * Generate the reduced basis set by using a greedy algorithm. This does not assume on
@@ -40,3 +36,28 @@ void greedyReducedBasis (const unsigned long N,
 void idToList (unsigned long idx, 
                std::vector<unsigned int> & dim, 
                std::vector<unsigned int> & list_out);
+
+/**
+ * Generate the reduced basis set by using a greedy algorithm. This does not assume on
+ * any functions whilst calculating the 
+ *
+ * @param RB_param The reduced basis parameter array
+ * @param RB The reduced basis array
+ * @param indices_out The output array for the EIM indices
+ * @param points_out The output array for the EIM points
+ */
+void greedyInterpolant (std::vector<std::vector<double> > & RB_param,
+                        std::vector<std::vector<double> > & RB,
+                        std::vector<long> & indices_out,
+                        std::vector<double> points_out);
+
+/**
+ * Generate a quadrature rule vector
+ *
+ * @param r The input vector, which will be overwritten with the quadrature rule vector
+ * @param RB The reduced basis array
+ * @param idx_EIM The Empirical interpolation points
+ */
+void constructROQ (std::vector<double> r,
+                   std::vector<std::vector<double> > & RB,
+                   std::vector<long> & indices_out);
