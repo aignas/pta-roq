@@ -14,13 +14,13 @@
  * @param verbose should data be printed to stdout?
  */
 void greedyReducedBasis (const unsigned long N,
-                         void (*getData)(unsigned long idx, 
-                                         std::vector<double> & params_out, 
-                                         std::vector<double> & data_out),
+                         void (*getData)(unsigned long idx, std::vector<double> & params_out, std::vector<double> & data_out),
                          std::vector<double> & A,
                          const double & epsilon,
                          std::vector<std::vector<double> > & RB_param_out,
                          std::vector<std::vector<double> > & RB_out,
+                         std::vector<double> & G_out,
+                         std::vector<double> & templateNorm_out,
                          std::vector<double> & sigma_out,
                          bool verbose = false);
 
@@ -46,18 +46,22 @@ void idToList (unsigned long idx,
  * @param indices_out The output array for the EIM indices
  * @param points_out The output array for the EIM points
  */
-void greedyInterpolant (std::vector<std::vector<double> > & RB_param,
-                        std::vector<std::vector<double> > & RB,
-                        std::vector<long> & indices_out,
-                        std::vector<double> points_out);
+void greedyEIMpoints (std::vector<std::vector<double> > & RB_param,
+                      std::vector<std::vector<double> > & RB,
+                      std::vector<long> & idx_out,
+                      std::vector<double> & points_out,
+                      std::vector<double> & A_out);
 
 /**
  * Generate a quadrature rule vector
  *
- * @param r The input vector, which will be overwritten with the quadrature rule vector
- * @param RB The reduced basis array
- * @param idx_EIM The Empirical interpolation points
+ * @param r The input vector, which will be modified
+ * @param r_out The output vector
+ * @param G The grammian matrix
+ * @param A The interpolation matrix
  */
-void constructROQ (std::vector<double> r,
-                   std::vector<std::vector<double> > & RB,
-                   std::vector<long> & indices_out);
+void constructROQ (std::vector<double> & r,
+                   std::vector<double> & r_out,
+                   std::vector<long> & idx,
+                   std::vector<double> & G,
+                   std::vector<double> & A);

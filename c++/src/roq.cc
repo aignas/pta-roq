@@ -17,25 +17,28 @@ void greedyReducedBasis (const unsigned long N,
                          const double & epsilon,
                          std::vector<std::vector<double> > & RB_param_out,
                          std::vector<std::vector<double> > & RB_out,
+                         std::vector<double> & G_out,
+                         std::vector<double> & templateNorm_out,
                          std::vector<double> & sigma_out,
                          bool verbose) {
     // Initialise an empty Grammaian, the parameter space and calculate the size of the
     // parameter space (total number of points)
 
-    std::vector<double> sigmaTrial (N, 0),
-                        templateNorm (N, 0);
+    std::vector<double> sigmaTrial (N, 0);
     std::vector<std::vector<double> > RB_out_hat,
-                                      coefficientsTmp;
+                                      coefficientsTmp (N);
     
     // Seed choice (arbitrary). We just randomize the first choice. We also select the
     // first error arbitrary. This is just to have the same dimensions of two arrays
     std::vector<long> RB_N {random_uniform_int(0, N)};
     //std::vector<long> RB_N {0};
 
-    // Randomize the first basis
+    // Resize the output containers
     sigma_out.resize(0);
     RB_out.resize(0);
     RB_param_out.resize(0);
+    G_out.resize(0);
+    templateNorm_out.resize(N);
 
     // Allocate some memory to paramsTrial and data arrays
     std::vector<double> paramsTrial, data;
@@ -58,18 +61,18 @@ void greedyReducedBasis (const unsigned long N,
 
     unsigned int chunk = CHUNKSIZE;
 
-#pragma omp parallel shared(templateNorm, chunk) private(data, paramsTrial)
+#pragma omp parallel shared(templateNorm_out, chunk) private(data, paramsTrial)
     {
 #pragma omp for
     for (unsigned long i = 0; i < N; i++) {
         (*getData)(i, paramsTrial, data);
-        templateNorm.at(i) = innerProduct (data, A, data);
+        templateNorm_out.at(i) = innerProduct (data, A, data);
     }
     } 
 
     std::cout << "DONE" << std::endl;
 
-    std::vector<double> Grammian, Grammian_inv;
+    std::vector<double> Grammian_inv;
 
     std::cout << "Starting the RB generation:" << std::endl;
 
@@ -84,10 +87,14 @@ void greedyReducedBasis (const unsigned long N,
 
         // Construct the Gram matrix and its inverse
         // FIXME Use the previous Grammian to just extend it?
-        extendGrammianOptimized (Grammian, RB_out, RB_out_hat);
+        try {
+            extendGrammianOptimized (G_out, RB_out, RB_out_hat);
+        } catch (const char *msg) {
+            std::cerr << msg << std::endl;
+        }
 
         // Check if the grammian is invertible
-        int i = inverseATLAS(Grammian, Grammian_inv);
+        int i = inverseATLAS(G_out, Grammian_inv);
         if (i != 0) {
             // This part is questionable, but let's see, how it goes.
             long argdel;
@@ -124,7 +131,7 @@ void greedyReducedBasis (const unsigned long N,
         //  * Do an MCMC search
         //
         // parallelize it with OpenMP
-#pragma omp parallel shared(sigmaTrial, templateNorm, chunk, Grammian, Grammian_inv, RB_out_hat, RB_N) private(data, paramsTrial)
+#pragma omp parallel shared(sigmaTrial, templateNorm_out, chunk, G_out, Grammian_inv, RB_out_hat, RB_N) private(data, paramsTrial)
         {
 #pragma omp for
             for (unsigned long j = 0; j < N; j++) {
@@ -134,7 +141,7 @@ void greedyReducedBasis (const unsigned long N,
                 (*getData)(j, paramsTrial, data);
 
 
-                sigmaTrial.at(j) = projectionErrorStableNew (templateNorm.at(j), coefficientsTmp.at(j), Grammian_inv);
+                sigmaTrial.at(j) = projectionErrorStableNew (templateNorm_out.at(j), coefficientsTmp.at(j), Grammian_inv);
             }
         }
 
@@ -183,28 +190,100 @@ bool arrayContainsLong (long N, std::vector<long> & A) {
     return r;
 }
 
-void greedyInterpolant (std::vector<std::vector<double> > & RB_param,
-                        std::vector<std::vector<double> > & RB,
-                        std::vector<long> & idx_out,
-                        std::vector<double> points_out) {
-    std::vector<double> error;
-    long N = RB.size();
-    std::vector<std::vector<double> > RB_copy = RB;
-    
+void reduceOrder (std::vector<long> & idx,
+                  std::vector<double> & h,
+                  std::vector<double> & h_out) {
+    unsigned int N = idx.size();
+    h_out.clear();
+
+    // Construct \vec{h}
+    for (unsigned i = 0; i < N; i++) {
+        h_out.push_back(h.at(idx.at(i)));
+    }
+}
+
+void constructInterpolant (std::vector<std::vector<double> > & RB,
+                           std::vector<double> & h,
+                           std::vector<long> & idx,
+                           std::vector<double> & A_out,
+                           std::vector<double> & data_out) {
+    // One of the matrices used here:
+    unsigned int N = idx.size();
+    std::vector<double> h_tmp(N), c_tmp(N);
+
+    A_out.clear();
+    A_out.resize(N*N);
+
+    // Construct the matrix
+    for (unsigned i = 0; i < N; i++) {
+        for (unsigned j = 0; j < N; j++) {
+            A_out.at(i+j*N) = RB.at(i).at(idx.at(j));
+        }
+    }
+
+    // Invert A
+    inverseATLASOverwrite(A_out);
+
+    reduceOrder (idx, h, h_tmp);
+
+    // Calculate \vec{c}
+    matrixVectorProduct(A_out,h_tmp,c_tmp);
+
+    // Calculate the last product:
+    data_out.clear();
+    data_out.resize(h.size());
+
+    for (unsigned i = 0; i < N; i++) {
+        axpyProduct(c_tmp.at(i), RB.at(i), data_out);
+    }
+}
+
+void greedyEIMpoints (std::vector<std::vector<double> > & RB_param,
+                      std::vector<std::vector<double> > & RB,
+                      std::vector<long> & idx_out,
+                      std::vector<double> & points_out,
+                      std::vector<double> & A_out) {
+    unsigned long N = RB.size(), Ndat = RB.at(0).size();
+    std::vector<double> error (Ndat);
+
     // Clear the output arrays:
     idx_out.clear();
     points_out.clear();
 
-    for (unsigned int i = 0; i < N; i++) {
-        error = RB_copy[i];
+    // Initiate the seed value
+    idx_out.push_back(0);
+    points_out.push_back(0);
+    findExtreme(RB.at(0), idx_out.back(), points_out.back());
+
+    for (unsigned int i = 1; i < N; i++) {
+        // Construct the interpolant
+        constructInterpolant (RB, RB.at(i), idx_out, A_out, error);
+        // Find the error
+        axpyProduct(-1, RB.at(i), error);
+
         idx_out.push_back(0);
         points_out.push_back(0);
-
-        findMax (error, idx_out.back(), points_out.back());
-
-        // Subtract the interpolant from the copy
-        for (unsigned int j = 0; j < i + 1; j++) {
-            axpyProduct(- RB[i][idx_out.at(0)]/RB[j][idx_out.at(0)], RB[j], RB_copy[i]);
-        }
+        findExtreme(error, idx_out.back(), points_out.back());
     }
 }
+
+void constructROQ (std::vector<double> & r,
+                   std::vector<double> & r_out,
+                   std::vector<long> & idx,
+                   std::vector<double> & G,
+                   std::vector<double> & A) {
+    unsigned int N = idx.size();
+
+    // One of the matrices used here:
+    std::vector<double> r_tmp (N, 0),
+                        r_out_tmp (N,0);
+    r_out.resize(N);
+
+    // do the products
+    reduceOrder (idx, r, r_tmp);
+    matrixVectorProduct (G, r_tmp, r_out_tmp);
+
+    matrixTranspVectorProduct (A, r_out_tmp, r_out);
+    std::cout << "Debug" << std::endl;
+}
+

@@ -1,7 +1,9 @@
 #include <vector>
 #include <iostream>
 
-#include "../src/reduced-basis.hh"
+#include "roq.hh"
+
+#include "../src/roq.hh"
 #include "../src/linalg.hh"
 #include "../src/random-helper.hh"
 
@@ -55,22 +57,17 @@ int test_idToList () {
 
 int test_greedyReducedBasis () {
     // The dimensions of the vector space
-    unsigned N = 16;
+    unsigned N = 116;
 
     // Initialize some vectors in N-D
     TestG::dataSpace.clear();
     for (unsigned i = 0; i < N*5; i++) {
         std::vector<double> tmp (N);
         for (unsigned j = 0; j < N; j++) {
-            tmp.at(j) = random_uniform (-30, 30);
+            tmp.at(j) = random_uniform (-1, 1);
         }
         TestG::dataSpace.push_back(tmp);
     }
-
-    for (unsigned i = 0; i < 15; i++) {
-        std::cout << random_uniform() << " ";
-    }
-    std::cout << std::endl;
 
     linspace(TestG::paramSpace.at(0), 0, 1, N*15);
 
@@ -87,15 +84,14 @@ int test_greedyReducedBasis () {
 
     // Generate a residual vector
     std::vector<std::vector<double> > RB_params, RB;
-    std::vector<double> sigma;
-    greedyReducedBasis (TestG::dataSpace.size(), getTestData, A, epsilon, RB_params, RB, sigma, true);
+    std::vector<double> sigma, G, tmp;
+    greedyReducedBasis (TestG::dataSpace.size(), getTestData, A, epsilon, RB_params, RB, G, tmp, sigma, false);
 
     random_uniform_free();
 
     int r = 0;
 
-    std::cout << RB.size() << std::endl;
-    if (not (RB.size() == N or RB.size() == N + 1) or RB.size() == N + 2) {
+    if (not (RB.size() == N or RB.size() == N + 1)) {
         r++;
     }
 
