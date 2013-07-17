@@ -1,5 +1,5 @@
 *.so
 *.o
 data_generator
-rb_generator
+roq_generator
 test_runner
