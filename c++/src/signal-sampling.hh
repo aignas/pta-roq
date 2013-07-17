@@ -6,12 +6,6 @@
 #include <valarray>
 #include "pulsar.hh"
 
-#ifndef _SIGNAL_SAMPLING_HXX_
-#define _SIGNAL_SAMPLING_HXX_
-// Define PI to a high precision
-const double _M_PI = 3.141592653589793238462643383279502884;
-#endif
-
 /**
  * Generate a signal, with optionally specifying whether to include noise or not
  *

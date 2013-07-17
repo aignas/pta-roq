@@ -3,6 +3,12 @@
 // and might never be used
 #include "pulsar.hh"
 
+#ifndef _SIGNAL_MODEL_HXX_
+#define _SIGNAL_MODEL_HXX_
+// Define PI to a high precision
+const double _M_PI = 3.141592653589793238462643383279502884;
+#endif
+
 typedef std::vector<double> dvec;
 
 /**

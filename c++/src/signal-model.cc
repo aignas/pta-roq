@@ -1,9 +1,6 @@
 #include <vector>
 #include <cmath>
-#include <stdio.h>
-#include <gsl/gsl_rng.h>
-
-#include <time.h>
+#include <iostream>
 
 #include "pulsar.hh"
 #include "signal-vectors.hh"
@@ -148,16 +145,16 @@ double individualSource (const double t, dvec& params, const double L, dvec& pUV
     intrinsic[1] = params.at(6);
     intrinsic[2] = params.at(7);
 
-    if (fabs(extrinsic[0]) <  1e-31) {
+    if (fabs(extrinsic[0]) <  1e-9) {
         throw "Error: The chirp mass of the source is too low";
-    } else if (fabs(extrinsic[1]) < 1e-31) {
+    } else if (fabs(extrinsic[1]) < 1e-9) {
         throw "Error: The distance to the source is too low";
-    } else if (fabs(intrinsic[0]) < 1e-31) {
+    } else if (fabs(intrinsic[0]) < 1e-9 or fabs(intrinsic[0] - _M_PI) < 1e-9) {
         throw "Error: The azimuthal angle is close to the coordinate singularity";
+    } else if (fabs(intrinsic[1]) > _M_PI) {
+        throw "Error: The polar angle is out of range (-pi;pi)";
     }
     // TODO other things to check
-    // theta close to M_PI
-    // phi out of range of (-M_PI, M_PI)
     // omega out of detection range
     // mass out of detection range
     // iota, psi out of range
@@ -187,7 +184,11 @@ double residual (const double t, const unsigned int N, std::vector<dvec>& source
 
     for (unsigned int i = 0; i < sources.size(); i++) {
         // FIXME Think whether I need an additional data structure here
-        Signal += individualSource(t, sources[i], L, pUV);
+        try {
+            Signal += individualSource(t, sources[i], L, pUV);
+        } catch (const char* mes) {
+            std::cerr << mes << std::endl;
+        }
     }
 
     // Add noise to the signal
