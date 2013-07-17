@@ -5,6 +5,23 @@
 
 \usepackage{amsmath, amssymb}
 
+%\usepackage[
+    %backend=biber,
+    %style=numeric
+%]{biblatex}
+
+%\addbibresource{../papers/pta-references.bib}
+
+\newcommand{\bigo}[1]{\ensuremath{\mathcal{O}\left( #1 \right)}}
+\renewcommand{\vec}[1]{\ensuremath{\mathbf{#1}}}
+\newcommand{\arr}[1]{\ensuremath{\mathrm{#1}}}
+
+% bra ket notation macros
+\newcommand{\bra}[1]{\ensuremath{\left\langle#1\right|}}
+\newcommand{\ket}[1]{\ensuremath{\left|#1\right\rangle}}
+\newcommand{\braket}[2]{\ensuremath{\left\langle #1 \middle| #2 \right\rangle}}
+\newcommand{\matrixel}[3]{\ensuremath{\left\langle #1 \middle| #2 \middle| #3 \right\rangle}}
+
 \author{Ignas Anikevičius}
 \title{PTA analysis}
 
@@ -45,9 +62,9 @@
     %
     The residual is defined as:
     %
-    \begin{align}
+    \begin{equation}
         \delta \vec{t} = t_{TOA} - t_{expected TOA}
-    \end{align}
+    \end{equation}
 
     The procedure is usually to observe the pulsars for a long time and choose
     only the most precise, so called millisecond pulsars, which have a very low
@@ -74,30 +91,30 @@
     The probability of noise defined as a multivariate Gaussian <citation
     needed>:
     %
-    \begin{align}
-        p \left( \vec{n} \right) = \cfrac{1}{\sqrt{\det 2\pi C}}
-        \exp{\left( - \frac{1}{2} \vec{n}^{T} C^{-1} \vec{n} \right) }
-    \end{align}
+    \begin{equation}
+        p \left( \vec{n} \right) = \cfrac{1}{\sqrt{\det 2\pi \arr{C}}}
+        \exp{\left( - \frac{1}{2} \vec{n}^{T} \arr{C}^{-1} \vec{n} \right) }
+    \end{equation}
     %
     If we assume that our residuals consist of a signal and a noise, we can
     rearrange the expression for noise:
     %
-    \begin{align}
+    \begin{equation}
         \vec{n} = \delta \vec{t} - \vec{h}
-    \end{align}
+    \end{equation}
     %
     where $\vec{h}$ is the signal template which is being fitted.
 
-    The matrix $C$ in the inner product in the exponent is called covariance
+    The matrix $\arr{C}$ in the inner product in the exponent is called covariance
     matrix, which contains the information about the correlations between the
     noise series $\vec{n}_i$ for each $i$th pulsar.
     %
     It is symmetric and the form of it can be rationalized as follows:
     %
-    \begin{align}
-        C_{ij} = C^{GWB}_{ij} + C^{WN}_{ij} + C^{RN}_{ij} + C^{PLN}_{ij} =
-        /left< \vec{n}_i \vec{n}_j /right>
-    \end{align}
+    \begin{equation}
+        C_{ij} = C^{GWB}_{ij} + C^{WN}_{ij} + C^{RN}_{ij} + C^{PLN}_{ij} = \left<
+        \vec{n}_i \vec{n}_j \right>
+    \end{equation}
     %
     where the angular brackets denote the cross-correlation of the noise time
     series from each pulsar <citation needed>.
@@ -107,17 +124,36 @@
     (WN), red (RN) and power-law noises (PLN) <citation needed>.
 
     The matrix present in the inner product in the exponent makes them
-    particularly expensive to evaluate as the operation scales as $\bigo \left(
-    n^{3} \right)$, where $n$ is the dimensionality of the vectors.
+    particularly expensive to evaluate as the operation scales as $\bigo{n^{3}}$,
+    where $n$ is the dimensionality of the vectors.
     %
     Also, because of the fact, that the matrix needs to be inverted before
     carrying out evaluations doesn't help either.
 
     From now on, we shall use a shorthand notation for such inner products, by
     employing the Dirac's bra-ket notation:
-    <formula needed>
+    %
+    \begin{equation}
+        \braket{\vec{a}}{\vec{b}} = \vec{a}^{T} \arr{C}^{-1} \vec{b} 
+    \end{equation}
+    %
+    Given this notation, we can express the logarithm of posterior probability
+    function ($\ln p$) as:
+    %
+    \begin{equation}
+        \ln p = -\cfrac{1}{2} \braket{\delta\vec{t}}{\delta\vec{t}} 
+        + \braket{\delta\vec{t}}{\vec{h}} 
+        -\cfrac{1}{2} \braket{\vec{h}}{\vec{h}}
+    \end{equation}
 
-    FIXME finish the description...
+    During the MCMC algorithm run, we would try to maximize $\ln p$ by varying the
+    signal template and since the dimensions of the vectors used in this
+    calculation tend to be large, these are computationally very intensive.
+    %
+    It is only the first term, which can be precomputed before doing the
+    calculations, however, it does not improve the computation time drastically.
+
+    % FIXME finish
 
     \section{Reduced Order Modelling}
 
@@ -132,7 +168,80 @@
     It relies on three crucial steps before the MCMC method application in the
     maximization of the likelihood.
 
+    % FIXME finish
+
     \chapter{The Reduced Basis Construction}
+
+    % FIXME finish
+
+    It is important to note, that during this stage we can precompute the norm of
+    the signal (i.e. \braket{\vec{h}}{\vec{h}}), which is very useful for
+    constructing the reduced basis \emph{and} posterior evaluation.
+    %
+    This means, that during the MCMC cycles we need to compute only one product,
+    which we shall speed up by using the Reduced Order Quadrature (ROQ) rule,
+    which is described in the next section.
+
+    \chapter{Reduced Order Quadrature (ROQ) rule construction}
+
+    This is a completely general method, which is described in the <Canizares
+    citation needed>, but I will include the discussion of the posterior
+    calculation here as well.
+
+    We know, that our signal template can be expressed as a linear combination of
+    the precomputed Reduced Basis functions:
+    %
+    \begin{equation}
+        \vec{h} \left( x \right) \approx \sum_{i} a_{i}\vec{e}_{i} \left( x \right)
+    \end{equation}
+    %
+    We also make it exactly match at the empirical interpolation points:
+    %
+    \begin{equation}
+        \vec{h} = \sum_{i} a_{i} \vec{e}_{i} \left( F_{k} \right)
+    \end{equation}
+    %
+    Hence, we can reexpress the above equation as a system of equations in
+    matrix notation (using summation convention):
+    %
+    \begin{equation}
+        \vec{h}_{i} = A_{ij} a_{j} \implies a_{i} = A^{-1}_{ij} h_{j} 
+    \end{equation} 
+
+    By expanding our residuals in a similar fashion, we can easily compute the
+    inner product between the residuals and the signal template (using the
+    summation convention):
+    %
+    \begin{align}
+        \delta\vec{t} &\approx b_{i} \vec{e}_{i} 
+        \implies
+        b_{i} = \braket{\delta \vec{t}}{\vec{e}_{i}} 
+        \\
+        \braket{\delta\vec{t}}{\vec{h}} &\approx b_{i}
+        \braket{\vec{e}_{i}}{\vec{e}_{j}} a_i
+        = b_{i} G_{ij} a_{i}
+        \\
+        &= b_{i} G_{ij} A^{-1}_{jk} h_{k} \equiv \widetilde{\delta t}_i h_{i}
+    \end{align}
+    %
+    Since the $\widetilde{\delta \vec{t}}$ can be precomputed before using the
+    MCMC method, this greatly speeds up the posterior evaluations during the MCMC
+    cycles.
+
+    %
+    Given all the derivations we have done, after constructing the ROQ rule, our
+    evaluation of the posterior becomes:
+    %
+    \begin{equation}
+        \ln p = -\cfrac{1}{2} \braket{\delta\vec{t}}{\delta\vec{t}} 
+        + \widetilde{\delta\vec{t}}^{T}\vec{h} 
+        -\cfrac{1}{2} \braket{\vec{h}}{\vec{h}}
+    \end{equation}
+    %
+    of which only the middle term needs to be recalculated and the dot product for
+    2 vectors scales as $\bigo{n^{2}}$.
+    %
+    Thus, by constructing the basis, we can bring the computational cost a lot.
 
 \end{document}
 
