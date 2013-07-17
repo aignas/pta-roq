@@ -28,6 +28,15 @@ double dotProduct (dvec& x, dvec& y);
 void matrixVectorProduct (dvec& A, dvec& x, dvec& y);
 
 /**
+ * A matrix-vector product y = A^T x
+ *
+ * @param A The matrix to do a transpose
+ * @param x The multiplied vector
+ * @param y The output vector
+ */
+void matrixTranspVectorProduct (dvec& A, dvec& x, dvec& y);
+
+/**
  * A generalised inner product of 2 vectors of same dimensionality n, which are
  * multiplied with a given matrix.
  *
@@ -95,6 +104,8 @@ double projectionErrorStable (double projecteeNorm, dvec& projectee,
                             std::vector<dvec> & set_hat,
                             dvec & G, dvec & G_inv);
 
+double projectionErrorStableNew (double projecteeNorm, dvec & coefficientsTmp, dvec & G_inv);
+
 /**
  * Norm of a vector
  *
@@ -149,3 +160,17 @@ int arrayEqual (dvec &x, dvec &y);
  * @param max_out The value of the maximum
  */
 void findMax (dvec & A, long & argmax_out, double & max_out);
+
+void findExtreme (dvec & A, long & argmax_out, double & max_out);
+
+
+/**
+ * Find a minimum value in the array
+ *
+ * @param A The array
+ * @param argmin_out The index of the minimum value
+ * @param min_out The value of the minimum
+ */
+void findMin (dvec & A, long & argmin_out, double & min_out);
+
+void axpyProduct(double a, dvec & x, dvec & y);

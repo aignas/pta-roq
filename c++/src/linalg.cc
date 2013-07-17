@@ -37,6 +37,10 @@ void matrixVectorProduct (dvec& A, dvec& x, dvec& y) {
     cblas_dgemv(CblasRowMajor, CblasNoTrans, x.size(), x.size(), 1, &A[0], x.size(), &x[0], 1, 0, &y[0], 1);
 }
 
+void matrixTranspVectorProduct (dvec& A, dvec& x, dvec& y) {
+    cblas_dgemv(CblasColMajor, CblasNoTrans, x.size(), x.size(), 1, &A[0], x.size(), &x[0], 1, 0, &y[0], 1);
+}
+
 double innerProduct(dvec& x, dvec& A, dvec& y) {
     dvec tmp (x.size());
 
@@ -50,6 +54,11 @@ double innerProduct(dvec& x, dvec& A, dvec& y) {
 void extendGrammianOptimized (dvec &G, std::vector<dvec>& set, std::vector<dvec>& set_hat) {
     // Assign the old matrix to the new one
     unsigned int N = set.size();
+
+    // Use exceptions
+    if (N != set_hat.size()) {
+        throw "Error: Grammian sets should have the same number of members";
+    }
 
     double tmp = 0;
     // We are extending the grammian in a clever way
@@ -65,27 +74,20 @@ void extendGrammianOptimized (dvec &G, std::vector<dvec>& set, std::vector<dvec>
 
 void constructGrammianOptimized (dvec &G, std::vector<dvec>& set, std::vector<dvec>& set_hat) {
     unsigned int N = set.size();
-    G.resize(N*N);
+    G.clear();
 
-    if (N != set_hat.size()) {
-        std::cout << "The two sets should have the same number of members" << std::endl;
-    }
+    std::vector<dvec> tmp_set, tmp_set_hat;
 
+    // Use the extension code
     for (unsigned int i = 0; i < N; i++) {
-        // The matrix is symmetric, hence calculate the diagonal terms here
-        G.at(i * (N + 1)) = dotProduct (set[i], set_hat[i]);
-
-        for (unsigned int j = i+1; j < N; j++) {
-            // calculate the offdiagonal terms
-            G.at(N*i + j) = dotProduct (set[i], set_hat[j]);
-            G.at(i + N*j) = G[j + N*i];
-        }
+        tmp_set.push_back(set.at(i));
+        tmp_set_hat.push_back(set_hat.at(i));
+        extendGrammianOptimized (G, tmp_set, tmp_set_hat);
     }
 }
 
 void constructGrammian (dvec &G, std::vector<dvec>& set, dvec& A) {
     unsigned int N = set.size();
-    G.resize(N*N);
 
     std::vector<dvec> set_tmp = set;
 
@@ -144,9 +146,16 @@ double projectionErrorStable (double projecteeNorm, dvec& projectee,
     }
 
     // Calculate the coefficients, use BLAS
-    matrixVectorProduct(G_inv, projections, coef);
 
-    return projecteeNorm - 2 * dotProduct(coef, projections) + innerProduct (coef, G, coef);
+    // Test a slightly different algorithm
+    //matrixVectorProduct(G_inv, projections, coef);
+    //return projecteeNorm - 2 * dotProduct(coef, projections) + innerProduct (coef, G, coef);
+
+    return projecteeNorm - innerProduct(projections, G_inv, projections);
+}
+
+double projectionErrorStableNew (double projecteeNorm, dvec & projections, dvec & G_inv) {
+    return projecteeNorm - innerProduct(projections, G_inv, projections);
 }
 
 void linspace (std::vector<double> & array_out, double min, double max, const unsigned int N) {
@@ -200,9 +209,16 @@ int inverseATLASOverwrite (std::vector<double> & A) {
 
     // Execute the LAPACK routines
     info1 = clapack_dgetrf(CblasRowMajor, N, N, &A[0], N, &IPIV[0]);
+
+    // Calculate the determinant
+    double det = 1;
+    for (unsigned int i = 0; i < N; i++) {
+        det *= A.at(i*(N+1));
+    }
+
     info2 = clapack_dgetri(CblasRowMajor, N,    &A[0], N, &IPIV[0]);
 
-    if (not (info1 == 0 and info2 == 0) ) {
+    if (not (info1 == 0 and info2 == 0) or fabs(det) < 1e-7) {
         return 1;
     } else {
         return 0;
@@ -212,7 +228,7 @@ int inverseATLASOverwrite (std::vector<double> & A) {
 int inverseATLAS (std::vector<double> & A, std::vector<double> & A_out) {
     A_out = A;
 
-    inverseATLASOverwrite (A_out);
+    return inverseATLASOverwrite (A_out);
 }
 
 int arrayEqual (dvec &x, dvec &y) {
@@ -228,6 +244,31 @@ int arrayEqual (dvec &x, dvec &y) {
     }
 
     return r;
+}
+
+void findExtreme (dvec & A, long & argmax_out, double & max_out) {
+    // FIXME exception if the array is 0 size
+    unsigned long N = A.size();
+
+    // No need to compare first element with the first
+    max_out = A.at(0), argmax_out = 0;
+
+    /*
+     * Parallelize the maximum search, taken from:
+     * http://openmp.org/forum/viewtopic.php?f=3&t=70&start=0&hilit=max+reduction+array
+     */
+#pragma omp parallel for
+    for (unsigned long i = 1; i < N; i++) {
+        if (fabs(max_out) < fabs(A.at(i))) {
+#pragma omp critical
+            {
+                if (fabs(max_out) < fabs(A.at(i))) {
+                    argmax_out = i;
+                    max_out = A.at(i);
+                }
+            }
+        }
+    }
 }
 
 void findMax (dvec & A, long & argmax_out, double & max_out) {
@@ -253,4 +294,23 @@ void findMax (dvec & A, long & argmax_out, double & max_out) {
             }
         }
     }
+}
+
+void findMin (dvec & A, long &argmin_out, double &min_out) {
+    // FIXME exception if the array is 0 size
+    unsigned long N = A.size();
+
+    dvec A_tmp = A;
+
+    // Change the sign of all the values in the array
+#pragma omp parallel for
+    for (unsigned int i = 0; i < N; i++) {
+        A_tmp.at(i) *= -1;
+    }
+
+    // Now the minimum becomes a maximum
+    findMax(A_tmp, argmin_out, min_out);
+
+    // Invert the value once more
+    min_out *= -1;
 }
