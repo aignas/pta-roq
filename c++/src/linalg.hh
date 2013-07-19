@@ -161,8 +161,6 @@ int arrayEqual (dvec &x, dvec &y);
  */
 void findMax (dvec & A, long & argmax_out, double & max_out);
 
-void findExtreme (dvec & A, long & argmax_out, double & max_out);
-
 
 /**
  * Find a minimum value in the array
@@ -173,4 +171,7 @@ void findExtreme (dvec & A, long & argmax_out, double & max_out);
  */
 void findMin (dvec & A, long & argmin_out, double & min_out);
 
+/**
+ * Constant vector product
+ */
 void axpyProduct(double a, dvec & x, dvec & y);

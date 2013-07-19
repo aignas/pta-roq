@@ -246,31 +246,6 @@ int arrayEqual (dvec &x, dvec &y) {
     return r;
 }
 
-void findExtreme (dvec & A, long & argmax_out, double & max_out) {
-    // FIXME exception if the array is 0 size
-    unsigned long N = A.size();
-
-    // No need to compare first element with the first
-    max_out = A.at(0), argmax_out = 0;
-
-    /*
-     * Parallelize the maximum search, taken from:
-     * http://openmp.org/forum/viewtopic.php?f=3&t=70&start=0&hilit=max+reduction+array
-     */
-#pragma omp parallel for
-    for (unsigned long i = 1; i < N; i++) {
-        if (fabs(max_out) < fabs(A.at(i))) {
-#pragma omp critical
-            {
-                if (fabs(max_out) < fabs(A.at(i))) {
-                    argmax_out = i;
-                    max_out = A.at(i);
-                }
-            }
-        }
-    }
-}
-
 void findMax (dvec & A, long & argmax_out, double & max_out) {
     // FIXME exception if the array is 0 size
     unsigned long N = A.size();
@@ -300,17 +275,17 @@ void findMin (dvec & A, long &argmin_out, double &min_out) {
     // FIXME exception if the array is 0 size
     unsigned long N = A.size();
 
-    dvec A_tmp = A;
+    dvec A_tmp (A.size(), 0);
 
     // Change the sign of all the values in the array
 #pragma omp parallel for
     for (unsigned int i = 0; i < N; i++) {
-        A_tmp.at(i) *= -1;
+        A_tmp.at(i) = -A.at(i);
     }
 
     // Now the minimum becomes a maximum
     findMax(A_tmp, argmin_out, min_out);
 
     // Invert the value once more
-    min_out *= -1;
+    min_out = -min_out;
 }
