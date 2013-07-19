@@ -13,13 +13,11 @@ void generateSample (std::vector<double>& out, std::vector<Pulsar> &pulsars,
                      bool noise) { 
     const unsigned int N = indices.size();
 
-    if (out.size() != N) {
-        out.resize(N);
-    }
+    out.clear();
 
     // Start collecting the data
     for (unsigned int i = 0; i < N; i++) {
-        out[i] = residual(Times[i], indices[i], sources, pulsars.at(indices[i]), noise);
+        out.push_back(residual(Times[i], indices[i], sources, pulsars.at(indices[i]), noise));
     }
 }
 

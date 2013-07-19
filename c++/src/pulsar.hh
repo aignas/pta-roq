@@ -12,8 +12,7 @@ class Pulsar {
                mPhi,
                mWhiteNoise;
         dvec mRedNoise,
-             mPowerLawNoise,
-             mTimes;
+             mPowerLawNoise;
 
     public:
         Pulsar ();
@@ -62,6 +61,20 @@ class Pulsar {
          * @param gamma spectral index
          */
         void setPowerLawNoise (double N, double gamma);
+
+        /**
+         * Export all params into a 1D vector of doubles
+         *
+         * @param props_out The output vector
+         */
+        void getAll (std::vector<double> & props_out);
+
+        /**
+         * Import all params into a 1D vector of doubles
+         *
+         * @param props_out The output vector
+         */
+        void setAll (std::vector<double> & props);
 
         // Getters
         /**

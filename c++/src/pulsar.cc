@@ -35,6 +35,22 @@ std::vector<double> Pulsar::getUnitVector () {
     return v;
 }
 
+void Pulsar::getAll (std::vector<double> & props_out) {
+    props_out.clear();
+    props_out = { mDistance, mTheta, mPhi, mWhiteNoise };
+    props_out.insert(props_out.end(), mRedNoise.begin(), mRedNoise.end());
+    props_out.insert(props_out.end(), mPowerLawNoise.begin(), mPowerLawNoise.end());
+}
+
+void Pulsar::setAll (std::vector<double> & props) {
+    mDistance      = props.at(0);
+    mTheta         = props.at(1);
+    mPhi           = props.at(2);
+    mWhiteNoise    = props.at(3);
+    mRedNoise      = {props.at(4), props.at(5)};
+    mPowerLawNoise = {props.at(6), props.at(7)};
+}
+
 namespace pulsarGrid {
     void randomizeData (std::vector<Pulsar>& Grid, unsigned int N, dvec range, double wnoise) {
         for (unsigned int i = 0; i < N; i++) {
@@ -49,6 +65,8 @@ namespace pulsarGrid {
 
             // Randomize the noise values, such that all pulsars have different noises.
             tmp.setWhiteNoise(random_uniform(0,wnoise));
+            tmp.setRedNoise(0,0);
+            tmp.setPowerLawNoise(0,0);
 
             Grid.push_back(tmp);
         }
