@@ -2,7 +2,7 @@
 #include <string>
 
 #include "linalg.hh"
-#include "reduced-basis.hh"
+#include "roq.hh"
 
 void testing_wrap( int (*f)(void), std::string name, unsigned int & r, unsigned int & t);
 void title_wrap (std::string name);
@@ -21,10 +21,14 @@ int main () {
     testing_wrap(test_projectionResidual, "projectionResidual", r, t);
     testing_wrap(test_linspace, "linspace", r, t);
     testing_wrap(test_findMax, "findMax", r, t);
+    testing_wrap(test_findMin, "findMin", r, t);
 
     title_wrap("reduced-basis");
     testing_wrap(test_idToList, "idToList", r, t);
     testing_wrap(test_greedyReducedBasis, "greedyReducedBasis", r, t);
+    std::cout << "The following tests are not implemented yet!" << std::endl;
+    testing_wrap(test_greedyEIMpoints, "greedyEIMpoints", r, t);
+    testing_wrap(test_constructROQ, "constructROQ", r, t);
 
     std::cout << "\nTest results:\n\t" << r << " out of " << t << " tests were failed" << std::endl;
 

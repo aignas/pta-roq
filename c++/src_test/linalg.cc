@@ -96,11 +96,31 @@ int test_findMax () {
     long arg_max;
     double max;
 
-    findMax(x,arg_max,max);
+    findMax(x, arg_max, max);
 
     int r = 0;
 
     if (not (arg_max == 22 and max - x[22] < 1e-300)) {
+        r++;
+    }
+
+    return r;
+}
+
+int test_findMin () {
+    // A semi random sequence
+    std::vector<double> x = { 1,0,5,939,329348,8,98,98,97,5,3,3984,7398,938479,37894,384,739,749,9838794,7893978,4978,39874,-9873897,3};
+
+    long arg_min;
+    double min;
+
+    findMin(x, arg_min, min);
+
+    int r = 0;
+
+
+    if (not (arg_min == 22 and min - x[22] < 1e-300)) {
+        std::cout << arg_min << " " << min << std::endl;
         r++;
     }
 

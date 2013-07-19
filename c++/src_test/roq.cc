@@ -98,6 +98,28 @@ int test_greedyReducedBasis () {
     return r;
 }
 
+// At the moment fail the test
+int test_greedyEIMpoints () {
+    int r = 0;
+
+    if (true) {
+        r++;
+    }
+
+    return r;
+}
+
+// At the moment fail the test
+int test_constructROQ () {
+    int r = 0;
+
+    if (true) {
+        r++;
+    }
+
+    return r;
+}
+
 void getTestData (unsigned long idx, std::vector<double> & params_out, std::vector<double> & data_out) {
     params_out.resize(1);
     params_out[0] = idx;

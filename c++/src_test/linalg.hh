@@ -43,3 +43,8 @@ int test_arrayEqual ();
  * Test the findMax function
  */
 int test_findMax ();
+
+/**
+ * Test the findMin function
+ */
+int test_findMin ();
