@@ -2,6 +2,11 @@
 #include <iterator>
 #include <iostream>
 #include <fstream>
+#include <string>
+#include <sstream>
+
+#include <locale>
+#include <ctime>
 
 #include <vector>
 
@@ -36,20 +41,36 @@ namespace G {
 // Declare the get data function, which will be used in the reduced basis generator
 void getData(unsigned long idx, std::vector<double> & params_out, std::vector<double> & data_out);
 
-int main() {
-    unsigned int pulsarNumber = 18;
-    // The range initializer using C++11
-    std::vector<double> range {50, 100, 0, _M_PI, -_M_PI, _M_PI};
+/// 
+// This will be a simple interface.
+//
+// The parameters, which can (should) be given are:
+//      * timestamp: The timestamp of the data
+//      * directory: The directory where to store the data
+int main(int argc, char * argv []) {
+    if (argc != 3) {
+        std::cerr << "Not enough parameters. Please enter the timestamp and the saving directory for the data." << std::endl;
 
-    // Define some variables for bigger timescales
-    const double week = 7 * 3600 * 24,
-                 year = 52 * week,
+        return 1;
+    }
 
-                 t_final = 5 * year,
-                 dt_min = 2 * week,
-                 dt_max = 2 * week;
+    // Output filenames 
+    std::vector<std::string> fnames = {
+        "rb",       // Output reduced basis
+        "time-roq"  // Output schedule (indices and Times)
+        "data-roq", // Output roq rule
+    };
 
-    std::vector<double> t_init (pulsarNumber, 0);
+    std::string prefix = "roq", 
+                extension = ".csv";
+
+    std::stringstream fnameFull;
+    for (unsigned i = 0; i < fnames.size(); i++) {
+        fnameFull.str(std::string());
+        fnameFull << argv[2] << prefix << "-" << argv[1] << "-"  << fnames[i] << extension;
+        fnames[i] = fnameFull.str();
+    }
+    std::cout << std::endl;
 
     // Variables needed for RB generation
     std::vector<double> C_inv,
@@ -63,12 +84,12 @@ int main() {
     std::vector<long> EIM_indices;
     std::vector<std::vector<double> > RB_params, RB;
 
+    // FIXME Read the pulsar data from a file
     // Randomize the pulsar structure and generate a schedule
-    std::cout << "Prepare the pulsars" << std::endl;
-    pulsarGrid::randomizeData (G::pulsars, pulsarNumber, range, 1e-15);
-    pulsarGrid::generateSchedule (t_init, t_final, dt_min, dt_max, G::indices, G::Times);
+    std::cout << "Read pulsar and schedule data from a file: " << std::endl;
 
-    // Construct the parameter space
+    // FIXME check if it is possible to have reduced basis for the Basis functions of
+    // the signal (A^i):
     G::params.resize(8);
     linspace(G::params[0], 1,1,1);
     linspace(G::params[1], 1e19, 1e19, 1);
@@ -77,14 +98,7 @@ int main() {
     linspace(G::params[4], 0.1, 0.3, 1);
     linspace(G::params[5], 0.1, 3, 10);
     linspace(G::params[6], -3, 3, 10);
-    linspace(G::params[7], 1.0e-9, 1.0e-8, 30);
-
-    // Generate some mock data, so that we can construct the roq rule
-    // Construct a parameter
-    std::vector<double> source_one = {1,1e19,0.1,0.1,0.1,2.5,0.2,5e-9};
-    std::vector<std::vector<double> > sources;
-    sources.push_back(source_one);
-    generateSample (data, G::pulsars, G::indices, G::Times, sources, true);
+    linspace(G::params[7], 2e-9, 4e-7, 30);
 
     // Construct the dimensionalities vector
     unsigned long totalNumber = 1;
@@ -93,64 +107,69 @@ int main() {
         totalNumber *= G::dimensionalities.at(i);
     }
 
+    // FIXME Read some data from a file
+
     // Set the error
     const double epsilon = 1e-35;
 
+    // Protected code
     try {
-        std::cout << "Generate the covariance matrix" << std::endl;
+        std::ofstream fout;
+        std::cout << "Generate the covariance matrix: "; std::cout.flush();
         // Constructing a covariance matrix
         genCovarianceMatrix (C_inv, G::pulsars, G::indices, G::Times, true, false, false, false);
+        std::cout << "DONE" << std::endl;
 
-        std::cout << "Generate the RB" << std::endl;
+        std::cout << "Generate the RB: "; std::cout.flush();
         greedyReducedBasis (totalNumber, getData, C_inv, epsilon, RB_params, RB, Grammian, templateNorms, sigma, true);
+        std::cout << "DONE" << std::endl;
 
-        std::cout << "Generate the interpolation points: ";
+        std::cout << "Generate the interpolation points: "; std::cout.flush();
         greedyEIMpoints (RB_params, RB, EIM_indices, EIM_points, interpolationMatrix);
         std::cout << "DONE" << std::endl;
         
-        std::cout << "Generate the ROQ rule: ";
+        std::cout << "Generate the ROQ rule: "; std::cout.flush();
         constructROQ (data, data_tilda, EIM_indices, Grammian, interpolationMatrix);
         std::cout << "DONE" << std::endl;
 
-        // Output the vectors to std::cout
-        std::cout << "N,error,p1,p2,p3,p4,p5,p6,p7,p8" << std::endl;
+        // Output the basis params and error to a file
+        fout.open(fnames[0]);
+        fout << "error";
+        for (unsigned j = 0; j < RB_params[0].size(); j++) {
+            fout << ", p" << j;
+        }
+        fout << std::endl;
         for (unsigned i = 0; i < sigma.size(); i++) {
-            std::cout << i+1 << ", " << sigma.at(i);
+            fout << sigma.at(i);
             for (unsigned j = 0; j < RB_params[0].size(); j++) {
-                std::cout << ", " << RB_params.at(i).at(j);
+                fout << ", " << RB_params.at(i).at(j);
             }
-            std::cout << std::endl;
+            fout << std::endl;
         }
-        std::cout << std::endl;
+        fout.close();
 
-        std::cout << "N,eimid" << std::endl;
+        // Generate a new schedule with the eim points
+        fout.open(fnames[1]);
+        fout << "eimid, schedid, schedtime" << std::endl;
         for (unsigned i = 0; i < EIM_indices.size(); i++) {
-            std::cout << i+1 << ", " << EIM_indices.at(i);
-            std::cout << std::endl;
+            fout << EIM_indices.at(i) << ", " <<  
+                    G::indices.at(EIM_indices.at(i)) << ", " << 
+                    G::Times.at(EIM_indices.at(i)) << 
+                    std::endl;
         }
-        std::cout << std::endl;
+        fout.close();
 
-        std::cout << "N, templateNorms" << std::endl;
-        for (unsigned i = 0; i < templateNorms.size(); i++) {
-            std::cout << i+1 << ", " << templateNorms.at(i);
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-        
-        std::cout << "signal, signal_tilda" << std::endl;
+        fout.open(fnames[3]);
+        fout << "signal_tilda" << std::endl;
         for (unsigned i = 0; i < data_tilda.size(); i++) {
-            std::cout << i+1 << ", " << data_tilda.at(i);
-            std::cout << std::endl;
+            fout << data_tilda.at(i) << std::endl;
         }
-        std::cout << std::endl;
+        fout.close();
 
     } catch (const char* msg) {
         // Add some colours
         std::cerr << msg << std::endl;
     }
-
-    // Lets output the generated basis parameters and the error
-    // FIXME write functions which output to a file
 
     return 0;
 }

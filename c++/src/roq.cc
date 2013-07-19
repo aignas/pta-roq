@@ -57,7 +57,9 @@ void greedyReducedBasis (const unsigned long N,
     // FIXME This will need to be stored in a file for likelyhood evaluations,
     // because in this way I can ommit expensive inner products there and here
     // I can't get away without calculating them, so it's a win/win situation.
-    std::cout << "Calculating the norms of the signal templates: ";
+    if (verbose) {
+        std::cout << "Calculating the norms of the signal templates: "; std::cout.flush();
+    }
 
     unsigned int chunk = CHUNKSIZE;
 
@@ -70,11 +72,11 @@ void greedyReducedBasis (const unsigned long N,
     }
     } 
 
-    std::cout << "DONE" << std::endl;
-
     std::vector<double> Grammian_inv;
-
-    std::cout << "Starting the RB generation:" << std::endl;
+    if (verbose) {
+        std::cout << "DONE" << std::endl;
+        std::cout << "The relative error at each iteration:" << std::endl;
+    }
 
     // The parameter space is large, so the computation will be expensive
     while (sigma_out.back() > epsilon) {
@@ -150,7 +152,9 @@ void greedyReducedBasis (const unsigned long N,
         RB_N.push_back(0);
         findMax(sigmaTrial, RB_N.back(), sigma_out.back());
 
-        std::cout << "\t" << sigma_out.size() << " " << sigma_out.back() << std::endl;
+        if (verbose) {
+            std::cout << "\t" << sigma_out.size() << "\t" << sigma_out.back()/sigma_out.at(1) << std::endl;
+        }
 
         // Add the lambda_i, which was found by maximizing the error
         (*getData)(RB_N.back(), paramsTrial, data);
@@ -253,7 +257,14 @@ void greedyEIMpoints (std::vector<std::vector<double> > & RB_param,
     // Initiate the seed value
     idx_out.push_back(0);
     points_out.push_back(0);
-    findExtreme(RB.at(0), idx_out.back(), points_out.back());
+    error = RB.at(0);
+
+    // Find a modulus
+    for (unsigned i=0; i < error.size(); i++) {
+        error[i] = fabs(error[i]);
+    }
+
+    findMax(error, idx_out.back(), points_out.back());
 
     for (unsigned int i = 1; i < N; i++) {
         // Construct the interpolant
@@ -263,7 +274,13 @@ void greedyEIMpoints (std::vector<std::vector<double> > & RB_param,
 
         idx_out.push_back(0);
         points_out.push_back(0);
-        findExtreme(error, idx_out.back(), points_out.back());
+
+        // Find a modulus
+        for (unsigned j=0; j < error.size(); j++) {
+            error[j] = fabs(error[j]);
+        }
+
+        findMax(error, idx_out.back(), points_out.back());
     }
 }
 
