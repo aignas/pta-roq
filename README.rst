@@ -8,15 +8,15 @@ Quadrature methods
 The structure of the project:
 -----------------------------
 
-1. A Data generator (94%)
+2. A Reduced Basis (RB) EIM points and the ROQ rule generator (90%)
 
-2. A Reduced Basis (RB) generator (50%)
+ a) Read the residuals from the file.
 
 3. A parameter fitting program:
 
  a) Using the conventional methods, described by [vanHaasteren2012a]_ and [Ellis2010a]_. (30%)
 
- b) Using RB methods (0 %)
+ b) Using RB methods (20 %)
 
 Meanings of symbols used in the project
 ---------------------------------------

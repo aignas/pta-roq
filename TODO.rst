@@ -20,10 +20,8 @@ Conventional data analysis
 --------------------------
 
 1. Finish the covariance matrix calculation function (red and power law noise terms are
-   missing at the moment). I need to understand what exactly they mean by various
-   parameters in the spectrum formulae and how to store them best in the pulsar data
-   structure. Also I need an algorithm, which would convert these frequency domain
-   formulae into the time domain.
+   missing at the moment). I need an algorithm, which would convert these frequency
+   domain formulae into the time domain (FFTW?).
 
 2. Write an algorithm for the usual data analysis procedure. This should be MCMC with
    maximizing the likelihood via brute force method.
@@ -50,39 +48,8 @@ Generation of my reduced basis
     is still not as precise. And, because this is the off-line stage, we do not care
     about the execution time that much, but we do care about the precision.
 
-2. How to calculate the projections efficiently, so that we do not have lots of memory
-   occupied?
-
-   Current problem is that we need to evaluate lots of products. Theoretically, we could
-   store everything, i.e. a grid of parameter space, the training set and projections,
-   but this doesn't smell right.
-
-   If our parameter space is large N-dim space, then this method is bound to have memory
-   problems.
-
-3. I talked with P. Canizares and the thing, which she suggested, was to use the RB and
-   EIM methods on "each" pulsar, because otherwise, the method might not be valid as
-   the waveforms depend on the pulsar positions and a single set of RB might not work.
-
-   However, this is still better, than doing the product the hard way. Although, I need
-   to get any numbers before stating it with confidence.
-
-   But first I will try the old method where I have the inner product well defined.
-
 Use the Empirical Interpolation Method with the Reduced basis
 -------------------------------------------------------------
-
-1. EIM is the reduction of points in the time domain. 
-
-   The method here might be different in a sense, that instead of time series, I would
-   have a time/pulsar series, which makes this sort of a different type of problem.
-   Also there might be some reasons why I need to change the method of interpolation in
-   some way.
-
-2. If Priscilla is correct, then I have several time series for different pulsars, I
-   will need to use the EIM and RB for each time series for each pulsar.
-
-3. After doing it I will be able (hopefully) to weed out the Covariance matrix.
 
 Test the above code for specific noise realisations
 ---------------------------------------------------
