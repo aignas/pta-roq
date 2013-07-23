@@ -4,47 +4,47 @@
 #include <sstream>
 #include <string>
 
-#include "signal-model.hh"
-#include "signal-sampling.hh"
-#include "pulsar.hh"
+#include "libs/signal/model.hh"
+#include "libs/signal/sampling.hh"
+#include "libs/pulsar.hh"
+#include "libs/iocsv.hh"
 
 int main(int argc, char * argv []) {
-    // argv[1] = saving dir
-    // argv[2] = timestamp
-    if (argc != 3) {
-        std::cerr << "Not enough parameters. Please enter the timestamp and the saving directory for the data." << std::endl;
-
-        return 1;
-    }
-
-    const unsigned int pulsarNumber = 36;
-
-    // Output filenames 
-    std::vector<std::string> fnames = {
-        "params",   // Output schedule (indices and Times)
-        "pulsars",  // Output pulsar properties
-        "schedule"  // Output schedule (indices and Times)
-    };
-
-    std::string prefix = "model", 
-                separator = "-",
-                extension = ".csv";
-
-    std::stringstream fnameFull;
-    // Generate the filenames
-    for (unsigned i = 0; i < fnames.size(); i++) {
-        fnameFull.str(std::string());
-        fnameFull << argv[1] << "/" << prefix << separator << argv[2] << separator << fnames[i] << extension;
-        fnames[i] = fnameFull.str();
-    }
+    std::vector<std::string> fnames, argv_s;
+    std::string delim;
 
     // Define some variables for bigger timescales
+    // These should be in python or something similar.
     const double week = 7 * 3600 * 24,
-                 year = 52 * week,
+                 year = 52 * week;
 
-                 t_final = 5 * year,
-                 dt_min = 2 * week,
-                 dt_max = 2 * week;
+    if (argc != 7) {
+        std::cerr << "Not enough parameters!!! The usage is as follows:\n"
+                  << "\t bin_name rc date N t_f dt_min dt_max\n\n"
+                  << "Meanings of the options are:\n"
+                  << "\t rc The configuration file\n"
+                  << "\t date Time stamp in whatever format you want, but it should be preferably YYYY-MM-DD-HH-MM-SS\n"
+                  << "\t N The pulsar number for the simulation\n"
+                  << "\t t_f Final simulation time in years\n"
+                  << "\t dt_min Minimum interval between measurements for some pulsar (in weeks)\n"
+                  << "\t dt_max Maximum interval between measurements for some pulsar (in weeks)\n"
+                  << "\t The time schedule can be a bit randomized if dt_min != dt_max"
+                  << std::endl;
+
+        return 1;
+    } else {
+        for (int i = i; i < argc ; i++) {
+            argv_s.push_back(argv[i]);
+        }
+    }
+
+    parseDataRC (argv_s[0], argv_s[1], fnames, delim);
+
+    // Read the parameters
+    const unsigned int pulsarNumber = helper::convertToUnsignedInt(argv_s[2]);
+    const double t_final = year * helper::convertToDouble(argv_s[3]),
+                 dt_min = week * helper::convertToDouble(argv_s[4]),
+                 dt_max = week * helper::convertToDouble(argv_s[5]);
 
     // Declare all the data structures
     // Randomize the starting times?
@@ -61,6 +61,7 @@ int main(int argc, char * argv []) {
     pulsarGrid::generateSchedule (t_init, t_final, dt_min, dt_max, indices, Times);
     std::cout << "DONE" << std::endl;
 
+    // FIXME must be configurable from a file
     // Add a single source
     sources.push_back({1,1e19, 0.1, 0.1, 0.1, 0.3, 0.5, 1e-7});
 
@@ -74,36 +75,18 @@ int main(int argc, char * argv []) {
         return 1;
     }
 
-    // Output the data and the pulsar schedule into a file:
-    //      * params - parameters used to generate the data
-    //      * pulsars - Pulsar props
-    //      * schedule-i - Schedule for the ith pulsar
-    std::ofstream fout;
-    fout.open(fnames[0]);
-    for (unsigned i = 0; i < sources.size(); i++) {
-        for (unsigned j = 0; j < sources.at(i).size(); j++) {
-            fout << sources.at(i).at(j) << " ";
-        }
-        fout << std::endl;
-    }
-    fout.close();
+    // Output the data into files:
+    // Output the pulsar parameters
+    pulsar2csv (fnames[0], pulsars, delim);
 
-    fout.open(fnames[1]);
-    std::vector<double> tmp;
-    for (unsigned i = 0; i < pulsars.size(); i++) {
-        pulsars[i].getAll(tmp);
-        for (unsigned j = 0; j < tmp.size(); j++) {
-            fout << tmp.at(j) << " ";
-        }
-        fout << std::endl;
-    }
-    fout.close();
+    // Output the schedule
+    arraysShortDouble2csv (fnames[1], indices, Times, delim);
 
-    fout.open(fnames[2]);
-    for (unsigned i = 0; i < indices.size(); i++) {
-        fout << indices.at(i) << " " << Times.at(i) << std::endl;
-    }
-    fout.close();
+    // Sources parameters
+    arrayArrayDouble2csv (fnames[2], sources, delim);
+
+    // Residuals out
+    arrayDouble2csv (fnames[3], r, delim);
 
     return 0;
 }

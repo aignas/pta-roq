@@ -10,12 +10,12 @@
 
 #include <vector>
 
-#include "pulsar.hh"
-#include "linalg.hh"
-#include "signal-model.hh"
-#include "signal-sampling.hh"
-
-#include "roq.hh"
+#include "libs/pulsar.hh"
+#include "libs/linalg.hh"
+#include "libs/signal/model.hh"
+#include "libs/signal/sampling.hh"
+#include "libs/iocsv.hh"
+#include "libs/roq.hh"
 
 /*
  * Use global variables here and although most of the times the usage of them is not
@@ -48,45 +48,43 @@ void getData(unsigned long idx, std::vector<double> & params_out, std::vector<do
 //      * timestamp: The timestamp of the data
 //      * directory: The directory where to store the data
 int main(int argc, char * argv []) {
-    if (argc != 3) {
-        std::cerr << "Not enough parameters. Please enter the timestamp and the saving directory for the data." << std::endl;
+    std::vector<std::string> fnames, argv_s;
+    std::string delim;
+
+    if (argc != 4) {
+        std::cerr << "Not enough parameters!!! The usage is as follows:\n"
+                  << "\t bin_name rc date date_in\n\n"
+                  << "Meanings of the options are:\n"
+                  << "\t rc The configuration file\n"
+                  << "\t date Time stamp in whatever format you want, but it should be preferably YYYY-MM-DD-HH-MM-SS\n"
+                  << "\t date_in Time stamp in whatever format you want. This should denote the time stamp for the file you want to read\n"
+                  << std::endl;
 
         return 1;
+    } else {
+        for (int i = i; i < argc ; i++) {
+            argv_s.push_back(argv[i]);
+        }
     }
 
-    // Output filenames 
-    std::vector<std::string> fnames = {
-        "rb",       // Output reduced basis
-        "time-roq"  // Output schedule (indices and Times)
-        "data-roq", // Output roq rule
-    };
-
-    std::string prefix = "roq", 
-                extension = ".csv";
-
-    std::stringstream fnameFull;
-    for (unsigned i = 0; i < fnames.size(); i++) {
-        fnameFull.str(std::string());
-        fnameFull << argv[2] << prefix << "-" << argv[1] << "-"  << fnames[i] << extension;
-        fnames[i] = fnameFull.str();
-    }
-    std::cout << std::endl;
+    parseRoqRC (argv_s[0], argv_s[1], argv_s[2], fnames, delim);
 
     // Variables needed for RB generation
-    std::vector<double> C_inv,
-                        Grammian,
+    std::vector<double> C_inv, Grammian,
                         interpolationMatrix,
                         sigma,
                         EIM_points,
                         templateNorms,
                         data,
-                        data_tilda;
+                        data_tilda,
+                        Times_new;
     std::vector<long> EIM_indices;
+    std::vector<unsigned short> indices_new;
     std::vector<std::vector<double> > RB_params, RB;
 
-    // FIXME Read the pulsar data from a file
     // Randomize the pulsar structure and generate a schedule
     std::cout << "Read pulsar and schedule data from a file: " << std::endl;
+    csv2pulsar(fnames[0], G::pulsars, delim);
 
     // FIXME check if it is possible to have reduced basis for the Basis functions of
     // the signal (A^i):
@@ -107,7 +105,9 @@ int main(int argc, char * argv []) {
         totalNumber *= G::dimensionalities.at(i);
     }
 
-    // FIXME Read some data from a file
+    // Read the schedule and the residuals from a file
+    csv2arraysShortDouble(fnames[1], G::indices, G::Times, delim);
+    csv2arrayDouble(fnames[2], data, delim);
 
     // Set the error
     const double epsilon = 1e-35;
@@ -133,38 +133,18 @@ int main(int argc, char * argv []) {
         std::cout << "DONE" << std::endl;
 
         // Output the basis params and error to a file
-        fout.open(fnames[0]);
-        fout << "error";
-        for (unsigned j = 0; j < RB_params[0].size(); j++) {
-            fout << ", p" << j;
-        }
-        fout << std::endl;
-        for (unsigned i = 0; i < sigma.size(); i++) {
-            fout << sigma.at(i);
-            for (unsigned j = 0; j < RB_params[0].size(); j++) {
-                fout << ", " << RB_params.at(i).at(j);
-            }
-            fout << std::endl;
-        }
-        fout.close();
+        arrayArrayDouble2csv (fnames[3], RB_params, delim);
+        arrayDouble2csv (fnames[4], sigma, delim);
 
         // Generate a new schedule with the eim points
-        fout.open(fnames[1]);
-        fout << "eimid, schedid, schedtime" << std::endl;
         for (unsigned i = 0; i < EIM_indices.size(); i++) {
-            fout << EIM_indices.at(i) << ", " <<  
-                    G::indices.at(EIM_indices.at(i)) << ", " << 
-                    G::Times.at(EIM_indices.at(i)) << 
-                    std::endl;
+            indices_new.push_back(G::indices.at(EIM_indices.at(i)));
+            Times_new.push_back(G::Times.at(EIM_indices.at(i)));
         }
-        fout.close();
+        arraysShortDouble2csv (fnames[5], indices_new, Times_new, delim);
+        arraysLongDouble2csv (fnames[6], EIM_indices, EIM_points, delim);
 
-        fout.open(fnames[3]);
-        fout << "signal_tilda" << std::endl;
-        for (unsigned i = 0; i < data_tilda.size(); i++) {
-            fout << data_tilda.at(i) << std::endl;
-        }
-        fout.close();
+        arrayDouble2csv (fnames[7], data_tilda, delim);
 
     } catch (const char* msg) {
         // Add some colours

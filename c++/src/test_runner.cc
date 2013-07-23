@@ -1,9 +1,9 @@
 #include <iostream>
 #include <string>
 
-#include "linalg.hh"
-#include "roq.hh"
-#include "iocsv.hh"
+#include "test/linalg.hh"
+#include "test/roq.hh"
+#include "test/iocsv.hh"
 
 void testing_wrap( int (*f)(void), std::string name, unsigned int & r, unsigned int & t);
 void title_wrap (std::string name);
