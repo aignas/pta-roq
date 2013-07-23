@@ -24,7 +24,7 @@ compile_test: compile test
 all: clean compile_test
 default: compile
 
-.PHONY: $(TARGET)
+.PHONY: clean
 .PRECIOUS: $(LIB_OBJ) $(TARGET_OBJ)
 
 # Build a directory tree for the obj directory
@@ -37,10 +37,9 @@ $(DIR_OBJ)/%.o: $(DIR_SRC)/%.cc | $(DIR_OBJ) $(DIR_OBJ_ALL) $(DIR_TARGET)
 
 $(DIR_TARGET)/%: $(DIR_OBJ)/%.o $(LIB_OBJ) | $(DIR_RUN) $(TARGET_OBJ) $(LIB_OBJ)
 	@echo Linking $@
-	$(COMPILER) $^ -Wall $(LIB_OBJ) -o $@
+	@$(COMPILER) -Wall $^ $(LIBS) -o $@
 
 test: compile
-	@echo Executing the test suite
 	@bin/./test_runner
 
 clean:
