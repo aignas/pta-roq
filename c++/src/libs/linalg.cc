@@ -14,7 +14,7 @@ extern "C" {
 
 // Local linear algebra routines to abstract things
 #include "linalg.hh"
-#include "signal-sampling.hh"
+#include "signal/sampling.hh"
 
 #include <iostream>
 
@@ -212,7 +212,7 @@ int inverseATLASOverwrite (std::vector<double> & A) {
 
     // Calculate the determinant
     double det = 1;
-    for (unsigned int i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         det *= A.at(i*(N+1));
     }
 

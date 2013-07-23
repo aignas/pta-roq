@@ -1,14 +1,38 @@
 #include <vector>
 #include <cmath>
+#include <iostream>
 
 #include "pulsar.hh"
 #include "random-helper.hh"
 
+Pulsar::Pulsar (double x1, double x2, double x3, 
+                double wn, double rn, double rf, double pn, double pp) {
+    mDistance = x1;
+    mTheta = x2;
+    mPhi = x3;
+    mWhiteNoise = wn;
+    Pulsar::setRedNoise (rn, rf);
+    Pulsar::setPowerLawNoise (pn, pp);
+}
+
+Pulsar::Pulsar (std::vector<double> params) {
+    if (params.size() != 8) {
+        std::cerr << "Pulsar: wrong size of parameters" << std::endl;
+    }
+    mDistance = params.at(0);
+    mTheta = params.at(1);
+    mPhi = params.at(2);
+    mWhiteNoise = params.at(3);
+
+    Pulsar::setRedNoise (params.at(4), params.at(5));
+    Pulsar::setPowerLawNoise (params.at(6), params.at(7));
+}
+
 Pulsar::Pulsar () {
-        mDistance = 0;
-        mTheta = 0;
-        mPhi = 0;
-        mWhiteNoise = 0;
+    mDistance = 0;
+    mTheta = 0;
+    mPhi = 0;
+    mWhiteNoise = 0;
 }
 
 void Pulsar::setRedNoise (double N, double f) {

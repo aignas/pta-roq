@@ -8,7 +8,7 @@
 #include "../random-helper.hh"
 
 // load the linear algebra helpers
-#include "linalg.hh"
+#include "../linalg.hh"
 
 dvec antennaPattern (dvec& intrinsic, dvec& u_p) {
     // Using at method makes checks whether we are out of bounds. It is just better to

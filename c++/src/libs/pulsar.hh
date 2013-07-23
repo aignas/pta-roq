@@ -15,6 +15,8 @@ class Pulsar {
              mPowerLawNoise;
 
     public:
+        Pulsar (double, double, double, double, double, double, double, double);
+        Pulsar (std::vector<double>);
         Pulsar ();
 
         ~Pulsar () {}
