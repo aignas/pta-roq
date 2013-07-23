@@ -3,8 +3,7 @@
 #include <iostream>
 
 // Local linear algebra routines to abstract things
-#include "../linalg.hh"
-#include "linalg.hh"
+#include "../libs/linalg.hh"
 
 int test_dotProduct() {
     std::vector<double> x = {1,3,2}, y = {5,2,1};

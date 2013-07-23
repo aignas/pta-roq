@@ -2,8 +2,8 @@
 #include <vector>
 #include <string>
 
-#include "../iocsv.hh"
-#include "../pulsar.hh"
+#include "../libs/iocsv.hh"
+#include "../libs/pulsar.hh"
 
 int test_csvPulsar () {
     std::vector<Pulsar> pulsars, pulsars_read;

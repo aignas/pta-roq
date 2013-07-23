@@ -1,11 +1,9 @@
 #include <vector>
 #include <iostream>
 
-#include "roq.hh"
-
-#include "../roq.hh"
-#include "../linalg.hh"
-#include "../random-helper.hh"
+#include "../libs/roq.hh"
+#include "../libs/linalg.hh"
+#include "../libs/random-helper.hh"
 
 //////////////////////
 // This is needed for the test_greedyReducedBasis
