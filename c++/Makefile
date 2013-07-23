@@ -8,75 +8,40 @@ CFLAGS = -g -std=c++11 -pedantic -Wall -O3
 
 # Some directory variables
 DIR_SRC = src
-DIR_OBJ = obj
 DIR_RUN = data
-DIR_SRC_T= src_test
-DIR_OBJ_T= obj_test
-DIR_RUN_T= data_test
+DIR_TARGET = bin
+DIR_OBJ = obj
+DIR_OBJ_ALL = $(patsubst $(DIR_SRC)/%, $(DIR_OBJ)/%, $(shell find $(DIR_SRC) -type d | tail -n +2))
 
-# Manually write down the headers and the main program files
-SRC_LIB_HH := $(shell find $(DIR_SRC) -name *.hh)
-SRC_LIB_CC := $(patsubst $(DIR_SRC)/%.hh, %.cc, $(SRC_LIB_HH))
+# Find all libs and Targets
+LIB_OBJ    := $(patsubst $(DIR_SRC)/%.hh, $(DIR_OBJ)/%.o, $(shell find $(DIR_SRC) -name *.hh))
+TARGET     := $(patsubst $(DIR_SRC)/%.cc, $(DIR_TARGET)/%, $(shell find $(DIR_SRC) -maxdepth 1 -name *.cc))
+TARGET_OBJ := $(patsubst $(DIR_TARGET)/%, $(DIR_OBJ)/%.o, $(TARGET))
 
-SRC_TARGET_CC := data_generator.cc roq_generator.cc
-SRC_TARGET_OBJ:= $(patsubst %.cc, $(DIR_OBJ)/%.o, $(SRC_TARGET_CC))
-SRC_TARGET := $(patsubst %.cc, %, $(SRC_TARGET_CC))
+compile: $(LIB_OBJ) $(TARGET_OBJ) $(TARGET)
+compile_test: compile test
 
-SRC_OBJECTS := $(patsubst %.cc, $(DIR_OBJ)/%.o, $(SRC_LIB_CC))
-
-# For test files as well (include the main headers here as well
-TEST_LIB_HH := linalg.hh roq.hh
-TEST_LIB_CC := $(patsubst %.hh, %.cc, $(TEST_LIB_HH))
-
-TEST_TARGET_CC:= test_runner.cc
-TEST_TARGET_OBJ:=$(patsubst %.cc, $(DIR_OBJ_T)/%.o, $(TEST_TARGET_CC))
-TEST_TARGET := $(patsubst %.cc,%, $(TEST_TARGET_CC))
-
-TEST_OBJECTS := $(patsubst %.cc, $(DIR_OBJ)/%.o, $(SRC_LIB_CC)) \
-	            $(patsubst %.cc, $(DIR_OBJ_T)/%.o, $(TEST_LIB_CC))
-
-# Append directories to the headers
-SRC_LIB_HH := $(patsubst %.hh, $(DIR_SRC)/%.hh, $(SRC_LIB_HH))
-TEST_LIB_HH := $(patsubst %.hh, $(DIR_SRC_T)/%.hh, $(TEST_LIB_HH)) \
-	$(patsubst %.hh, $(DIR_SRC)/%.hh, $(SRC_LIB_HH))
-
-compile: $(SRC_OBJECTS) $(SRC_TARGET_OBJ) $(SRC_TARGET)
-compile_test: $(TEST_OBJECTS) $(TEST_TARGET_OBJ) $(TEST_TARGET)
-all: cleanall compile compile_test
+all: clean compile_test
 default: compile
 
-.PHONY: $(SRC_TARGET) $(TEST_TARGET)
-.PRECIOUS: $(SRC_OBJECTS) $(TEST_OBJECTS) $(SRC_TARGET_OBJ) $(TEST_TARGET_OBJ)
+.PHONY: $(TARGET)
+.PRECIOUS: $(LIB_OBJ) $(TARGET_OBJ)
 
-# Require directory creation
-$(DIR_SRC) $(DIR_OBJ) $(DIR_RUN) $(DIR_SRC_T) $(DIR_OBJ_T) $(DIR_RUN_T):
+# Build a directory tree for the obj directory
+$(DIR_SRC) $(DIR_RUN) $(DIR_TARGET) $(DIR_OBJ) $(DIR_OBJ_ALL):
 	$(MAKEDIR_P) $@
 
-$(SRC_OBJECTS) $(SRC_TARGET_OBJ): | $(DIR_OBJ)
-$(TEST_OBJECTS) $(TEST_TARGET_OBJ): | $(DIR_OBJ) $(DIR_OBJ_T) $(DIR_RUN_T)
-
-$(DIR_OBJ)/%.o: $(DIR_SRC)/%.cc
+$(DIR_OBJ)/%.o: $(DIR_SRC)/%.cc | $(DIR_OBJ) $(DIR_OBJ_ALL) $(DIR_TARGET)
 	@echo Building $@
-	@$(COMPILER) -c $(CFLAGS) $< -o $@
+	@$(COMPILER) -c $(CFLAGS) $^ -o $@
 
-$(DIR_OBJ_T)/%.o: $(DIR_SRC_T)/%.cc
-	@echo Building $@
-	@$(COMPILER) -c $(CFLAGS) $< -o $@
-
-$(SRC_TARGET): $(SRC_TARGET_OBJ)
+$(DIR_TARGET)/%: $(DIR_OBJ)/%.o $(LIB_OBJ) | $(DIR_RUN) $(TARGET_OBJ) $(LIB_OBJ)
 	@echo Linking $@
-	@$(COMPILER) $(SRC_OBJECTS) $(DIR_OBJ)/$@.o -Wall $(LIBS) -o $@
+	$(COMPILER) $^ -Wall $(LIB_OBJ) -o $@
 
-$(TEST_TARGET): $(TEST_TARGET_OBJ)
-	@echo Linking $@
-	@$(COMPILER) $(TEST_OBJECTS) $(DIR_OBJ_T)/$@.o -Wall $(LIBS) -o $@
-
-test: compile_test
+test: compile
 	@echo Executing the test suite
-	@./$(TEST_TARGET)
-
-cleanall:
-	-rm -rf $(DIR_OBJ) $(DIR_OBJ_T) $(SRC_TARGET) $(TEST_TARGET)
+	@bin/./test_runner
 
 clean:
-	-rm -rf $(SRC_TARGET) $(TEST_TARGET)
+	-rm -rf $(DIR_OBJ) $(DIR_TARGET)

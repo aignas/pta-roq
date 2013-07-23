@@ -3,7 +3,7 @@
 #include <iostream>
 
 // Local linear algebra routines to abstract things
-#include "../src/linalg.hh"
+#include "../linalg.hh"
 #include "linalg.hh"
 
 int test_dotProduct() {

@@ -3,6 +3,7 @@
 
 #include "linalg.hh"
 #include "roq.hh"
+#include "iocsv.hh"
 
 void testing_wrap( int (*f)(void), std::string name, unsigned int & r, unsigned int & t);
 void title_wrap (std::string name);
@@ -29,6 +30,11 @@ int main () {
     std::cout << "The following tests are not implemented yet!" << std::endl;
     testing_wrap(test_greedyEIMpoints, "greedyEIMpoints", r, t);
     testing_wrap(test_constructROQ, "constructROQ", r, t);
+
+    title_wrap("iocsv");
+    testing_wrap(test_csvPulsar,   "csv2pulsar and pulsar2csv",     r, t);
+    testing_wrap(test_csvSources,  "csv2sources and sources2csv",   r, t);
+    testing_wrap(test_csvSchedule, "csv2schedule and schedule2csv", r, t);
 
     std::cout << "\nTest results:\n\t" << r << " out of " << t << " tests were failed" << std::endl;
 

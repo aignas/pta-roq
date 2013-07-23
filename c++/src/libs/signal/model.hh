@@ -1,7 +1,8 @@
 #include <vector>
+
 // FIXME: Do I need this? because at the moment the pulsar grid is not used in this file
 // and might never be used
-#include "pulsar.hh"
+#include "../pulsar.hh"
 
 #ifndef _SIGNAL_MODEL_HXX_
 #define _SIGNAL_MODEL_HXX_

@@ -1,6 +1,6 @@
 #include <cmath>
 #include <vector>
-#include "signal-vectors.hh"
+#include "../vectors.hh"
 
 UnitVectors::UnitVectors (double theta, double phi) {
     mTheta = theta;

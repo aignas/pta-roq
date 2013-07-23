@@ -2,10 +2,10 @@
 #include <cmath>
 #include <iostream>
 
-#include "pulsar.hh"
-#include "signal-vectors.hh"
-#include "signal-model.hh"
-#include "random-helper.hh"
+#include "vectors.hh"
+#include "model.hh"
+#include "../pulsar.hh"
+#include "../random-helper.hh"
 
 // load the linear algebra helpers
 #include "linalg.hh"

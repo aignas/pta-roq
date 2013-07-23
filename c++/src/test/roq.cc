@@ -3,9 +3,9 @@
 
 #include "roq.hh"
 
-#include "../src/roq.hh"
-#include "../src/linalg.hh"
-#include "../src/random-helper.hh"
+#include "../roq.hh"
+#include "../linalg.hh"
+#include "../random-helper.hh"
 
 //////////////////////
 // This is needed for the test_greedyReducedBasis

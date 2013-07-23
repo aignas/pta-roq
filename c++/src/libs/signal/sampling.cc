@@ -2,10 +2,10 @@
 #include <valarray>
 #include <cmath>
 
-#include "linalg.hh"
-#include "pulsar.hh"
-#include "signal-model.hh"
-#include "signal-sampling.hh"
+#include "../linalg.hh"
+#include "../pulsar.hh"
+#include "model.hh"
+#include "sampling.hh"
 
 void generateSample (std::vector<double>& out, std::vector<Pulsar> &pulsars,
                      std::vector<unsigned short>& indices, std::vector<double>& Times,
