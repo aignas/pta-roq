@@ -209,26 +209,24 @@ int inverseATLASOverwrite (std::vector<double> & A) {
 
     // Execute the LAPACK routines
     info1 = clapack_dgetrf(CblasRowMajor, N, N, &A[0], N, &IPIV[0]);
-
-    // Calculate the determinant
-    double det = 1;
-    for (int i = 0; i < N; i++) {
-        det *= A.at(i*(N+1));
-    }
-
     info2 = clapack_dgetri(CblasRowMajor, N,    &A[0], N, &IPIV[0]);
 
-    if (not (info1 == 0 and info2 == 0) or fabs(det) < 1e-7) {
+    if (not (info1 == 0 and info2 == 0)) {
+        std::cerr << "Trying to invert a singular matrix" << std::endl;
         return 1;
-    } else {
-        return 0;
     }
+
+    return 0;
 }
 
 int inverseATLAS (std::vector<double> & A, std::vector<double> & A_out) {
     A_out = A;
 
-    return inverseATLASOverwrite (A_out);
+    try {
+        return inverseATLASOverwrite (A_out);
+    } catch (const char* msg) {
+        std::cerr << msg << std::endl;
+    }
 }
 
 int arrayEqual (dvec &x, dvec &y) {
