@@ -1,0 +1,25 @@
+# Extension of the files
+ext: csv
+# The delimiter in csv files
+delim: ,
+# The separator in the filename
+sep: -
+
+# Data dir
+dir.out: data
+dir.in:  data
+# Data files prefix
+prefix.out: roq
+prefix.in:  dat
+
+# The filenames for inputting various stuff.
+infile.pulsar: pulsars
+infile.sched:  schedule
+infile.resid:  residuals
+
+# Output filenames
+outfile.sched:    eim-sched
+outfile.eim:      eim-points
+outfile.resid:    residuals-roq
+outfile.rb:       rb
+outfile.rbparams: rbparams
