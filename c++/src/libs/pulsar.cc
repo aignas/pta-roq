@@ -16,16 +16,18 @@ Pulsar::Pulsar (double x1, double x2, double x3,
 }
 
 Pulsar::Pulsar (std::vector<double> params) {
-    if (params.size() != 8) {
-        std::cerr << "Pulsar: wrong size of parameters" << std::endl;
-    }
-    mDistance = params.at(0);
-    mTheta = params.at(1);
-    mPhi = params.at(2);
-    mWhiteNoise = params.at(3);
+    if (params.size() == 8) {
+        mDistance = params.at(0);
+        mTheta = params.at(1);
+        mPhi = params.at(2);
+        mWhiteNoise = params.at(3);
 
-    Pulsar::setRedNoise (params.at(4), params.at(5));
-    Pulsar::setPowerLawNoise (params.at(6), params.at(7));
+        Pulsar::setRedNoise (params.at(4), params.at(5));
+        Pulsar::setPowerLawNoise (params.at(6), params.at(7));
+    } else {
+        std::cerr << "Pulsar: wrong size of parameters." << "Given " << params.size() << " instead of 8" << std::endl;
+        std::cerr << "The last parameter is: " << params.back() << std::endl;
+    }
 }
 
 Pulsar::Pulsar () {
@@ -71,8 +73,9 @@ void Pulsar::setAll (std::vector<double> & props) {
     mTheta         = props.at(1);
     mPhi           = props.at(2);
     mWhiteNoise    = props.at(3);
-    mRedNoise      = {props.at(4), props.at(5)};
-    mPowerLawNoise = {props.at(6), props.at(7)};
+
+    Pulsar::setRedNoise (props.at(4), props.at(5));
+    Pulsar::setPowerLawNoise (props.at(6), props.at(7));
 }
 
 namespace pulsarGrid {

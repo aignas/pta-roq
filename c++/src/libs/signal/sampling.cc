@@ -1,6 +1,7 @@
 #include <vector>
 #include <valarray>
 #include <cmath>
+#include <iostream>
 
 #include "../linalg.hh"
 #include "../pulsar.hh"
@@ -24,6 +25,7 @@ void generateSample (std::vector<double>& out, std::vector<Pulsar> &pulsars,
 void genCovarianceMatrix (std::vector<double> & matrix, std::vector<Pulsar> & pulsars,
                           std::vector<unsigned short> & indices, std::vector<double> & Times,
                           const bool WhiteNoise, const bool RedNoise, const bool PowerLaw, const bool GWB) {
+    std::cout << "Generating the covariance matrix: ";
     unsigned int N = indices.size();
 
     // Initiate a zero matrix
@@ -37,13 +39,9 @@ void genCovarianceMatrix (std::vector<double> & matrix, std::vector<Pulsar> & pu
     unsigned int NTrunk = 10000;
 
     if (WhiteNoise) {
-        unsigned int pidx = 0;
-        double amplitude = pow(pulsars[pidx].getWhiteNoise(), 2);
+        double amplitude;
         for (unsigned int i = 0; i < N; i++) {
-            if ( pidx != indices[i]) {
-                pidx = indices[i];
-                amplitude = pow(pulsars[pidx].getWhiteNoise(), 2);
-            }
+            amplitude = pow(pulsars[indices[i]].getWhiteNoise(), 2);
 
             // Fill only the diagonal entries
             matrix[ i * (N+1) ] = amplitude;
@@ -87,8 +85,11 @@ void genCovarianceMatrix (std::vector<double> & matrix, std::vector<Pulsar> & pu
         }
     }
 
+    std::vector<double> matrix_old = matrix;
     // Invert the matrix, as we do not need the other bit
-    inverseATLASOverwrite(matrix);
+    inverseATLAS(matrix_old, matrix);
+
+    std::cout << "DONE" << std::endl;
 }
 
 // Calculate red noise Lorentzian terms (i.e. red noise)

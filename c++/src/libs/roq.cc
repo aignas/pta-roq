@@ -34,12 +34,15 @@ void greedyReducedBasis (const unsigned long N,
     //std::vector<long> RB_N {0};
 
     // Resize the output containers
-    sigma_out.resize(0);
-    RB_out.resize(0);
-    RB_param_out.resize(0);
-    G_out.resize(0);
+    sigma_out.clear();
+    RB_out.clear();
+    RB_param_out.clear();
+    G_out.clear();
     templateNorm_out.resize(N);
 
+    if (verbose) {
+        std::cout << "Generating the reduced basis: " << std::endl;
+    }
     // Allocate some memory to paramsTrial and data arrays
     std::vector<double> paramsTrial, data;
 
@@ -117,7 +120,7 @@ void greedyReducedBasis (const unsigned long N,
         // Precalculate the projections of the signal templates onto the basis vectors
         // (do not worry about the orthogonality), since these should stay constant, we
         // can reuse them
-#pragma omp parallel shared(RB_out_hat, chunk) private(data, paramsTrial)
+#pragma omp parallel shared(RB_out_hat, coefficientsTmp, chunk) private(data, paramsTrial)
         {
 #pragma omp for
             for (unsigned long j = 0; j < N; j++) {
@@ -126,7 +129,6 @@ void greedyReducedBasis (const unsigned long N,
                 coefficientsTmp.at(j).push_back(dotProduct(data, RB_out_hat.back()));
             }
         }
-
 
         // FIXME Stupidly traverse the entire parameter space. Possible
         // improvements:
@@ -153,7 +155,7 @@ void greedyReducedBasis (const unsigned long N,
         findMax(sigmaTrial, RB_N.back(), sigma_out.back());
 
         if (verbose) {
-            std::cout << "\t" << sigma_out.size() << "\t" << sigma_out.back()/sigma_out.at(1) << std::endl;
+            std::cout << "\t" << sigma_out.size() << "\t" << sigma_out.back() << std::endl;
         }
 
         // Add the lambda_i, which was found by maximizing the error
