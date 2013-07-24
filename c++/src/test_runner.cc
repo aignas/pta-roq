@@ -9,7 +9,7 @@ void testing_wrap( int (*f)(void), std::string name, unsigned int & r, unsigned 
 void title_wrap (std::string name);
 
 int main () {
-    std::cout << "Launching the testing suite" << std::endl;
+    std::cout << "\nLaunching the testing suite" << std::endl;
 
     unsigned int r = 0, t = 0;
 

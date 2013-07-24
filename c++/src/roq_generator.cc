@@ -48,55 +48,82 @@ void getData(unsigned long idx, std::vector<double> & params_out, std::vector<do
 //      * timestamp: The timestamp of the data
 //      * directory: The directory where to store the data
 int main(int argc, char * argv []) {
-    std::vector<std::string> fnames, argv_s;
+    std::vector<std::string> fnames, argvs;
     std::string delim;
+    for (int i = 0; i < argc ; i++) {
+        argvs.push_back(argv[i]);
+    }
 
-    if (argc != 4) {
+    if (argc != 6) {
         std::cerr << "Not enough parameters!!! The usage is as follows:\n"
-                  << "\t bin_name rc date date_in\n\n"
+                  << "\t " << argvs[0] << " rc param_range_rc date date_in error\n\n"
                   << "Meanings of the options are:\n"
                   << "\t rc The configuration file\n"
+                  << "\t param_range_rc The configuration file for the parameter ranges\n"
                   << "\t date Time stamp in whatever format you want, but it should be preferably YYYY-MM-DD-HH-MM-SS\n"
                   << "\t date_in Time stamp in whatever format you want. This should denote the time stamp for the file you want to read\n"
+                  << "\t error An error to achieve in the RB approximation\n"
                   << std::endl;
 
         return 1;
     } else {
-        for (int i = i; i < argc ; i++) {
-            argv_s.push_back(argv[i]);
-        }
+        std::cout << "\nStarting the ROQ construction" << std::endl;
     }
 
-    parseRoqRC (argv_s[0], argv_s[1], argv_s[2], fnames, delim);
+    if (parseRoqRC (argvs[1], argvs[3], argvs[4], fnames, delim) == 1) {
+        std::cerr <<        "The syntax of the config file was incorrect. The syntax is described bellow: "
+            << std::endl << "The key (i.e. the first value) matters here! But the whitespace doesn't unless it is a"
+            << std::endl << "commented line. Also, the order in which the options are given doesn't matter either."
+            << std::endl << "Commented lines start either with #."
+            << std::endl << ""
+            << std::endl << "Available keys:"
+            << std::endl << "\t- ext The extension of the files"
+            << std::endl << "\t- delim The delimiter used"
+            << std::endl << "\t- sep The separator used in the filename"
+            << std::endl << ""
+            << std::endl << "\t- dir.in The output directory"
+            << std::endl << "\t- prefix.in The prefix for the data input files"
+            << std::endl << "\t- infile.pulsar Input pulsar parameters"
+            << std::endl << "\t- infile.sched Input time stamps and indices of the timed pulsars"
+            << std::endl << "\t- infile.resid Input the residuals"
+            << std::endl << ""
+            << std::endl << "\t- dir.out The output directory"
+            << std::endl << "\t- prefix.out The prefix for the data output files"
+            << std::endl << "\t- outfile.sched Ouput the modified schedule"
+            << std::endl << "\t- outfile.eim Output the EIM points and indices"
+            << std::endl << "\t- outfile.resid Ouput the quadrature rule"
+            << std::endl << "\t- outfile.rb Ouput the reduced basis"
+            << std::endl << "\t- outfile.rbparams Ouput the parameters used to construct the reduced basis"
+            << std::endl;
+    }
+
+    // Set the error
+    const double epsilon = helper::convertToDouble(argvs[5]);
 
     // Variables needed for RB generation
-    std::vector<double> C_inv, Grammian,
-                        interpolationMatrix,
-                        sigma,
-                        EIM_points,
-                        templateNorms,
-                        data,
-                        data_tilda,
-                        Times_new;
+    std::vector<double> C_inv, Grammian, interpolationMatrix,
+                        sigma, EIM_points, templateNorms,
+                        data, data_tilda,
+                        Times_new,
+                        params_min, params_max;
     std::vector<long> EIM_indices;
     std::vector<unsigned short> indices_new;
+    std::vector<unsigned int> params_N;
     std::vector<std::vector<double> > RB_params, RB;
 
-    // Randomize the pulsar structure and generate a schedule
-    std::cout << "Read pulsar and schedule data from a file: " << std::endl;
+    // Read pulsar and schedule data from a file
+    csv2arraysShortDouble(fnames[1], G::indices, G::Times, delim);
     csv2pulsar(fnames[0], G::pulsars, delim);
 
     // FIXME check if it is possible to have reduced basis for the Basis functions of
     // the signal (A^i):
-    G::params.resize(8);
-    linspace(G::params[0], 1,1,1);
-    linspace(G::params[1], 1e19, 1e19, 1);
-    linspace(G::params[2], 0.1, 0.3, 1);
-    linspace(G::params[3], 0.1, 0.3, 1);
-    linspace(G::params[4], 0.1, 0.3, 1);
-    linspace(G::params[5], 0.1, 3, 10);
-    linspace(G::params[6], -3, 3, 10);
-    linspace(G::params[7], 2e-9, 4e-7, 30);
+    csv2paramRanges(argvs[2], params_min, params_max, params_N, delim);
+    G::params.resize(params_min.size());
+    std::cout << "Generating the parameter space: " << std::endl;
+    for (unsigned i = 0; i < G::params.size(); i++) {
+        std::cout << "\t" << i << " " << params_N[i] << " points in range [" << params_min[i] << "; " << params_max[i] << "]." << std::endl;
+        linspace(G::params[i], params_min[i], params_max[i], params_N[i]);
+    }
 
     // Construct the dimensionalities vector
     unsigned long totalNumber = 1;
@@ -105,32 +132,15 @@ int main(int argc, char * argv []) {
         totalNumber *= G::dimensionalities.at(i);
     }
 
-    // Read the schedule and the residuals from a file
-    csv2arraysShortDouble(fnames[1], G::indices, G::Times, delim);
+    // Read the residuals from a file
     csv2arrayDouble(fnames[2], data, delim);
-
-    // Set the error
-    const double epsilon = 1e-35;
 
     // Protected code
     try {
-        std::ofstream fout;
-        std::cout << "Generate the covariance matrix: "; std::cout.flush();
-        // Constructing a covariance matrix
         genCovarianceMatrix (C_inv, G::pulsars, G::indices, G::Times, true, false, false, false);
-        std::cout << "DONE" << std::endl;
-
-        std::cout << "Generate the RB: "; std::cout.flush();
         greedyReducedBasis (totalNumber, getData, C_inv, epsilon, RB_params, RB, Grammian, templateNorms, sigma, true);
-        std::cout << "DONE" << std::endl;
-
-        std::cout << "Generate the interpolation points: "; std::cout.flush();
         greedyEIMpoints (RB_params, RB, EIM_indices, EIM_points, interpolationMatrix);
-        std::cout << "DONE" << std::endl;
-        
-        std::cout << "Generate the ROQ rule: "; std::cout.flush();
         constructROQ (data, data_tilda, EIM_indices, Grammian, interpolationMatrix);
-        std::cout << "DONE" << std::endl;
 
         // Output the basis params and error to a file
         arrayArrayDouble2csv (fnames[3], RB_params, delim);

@@ -20,7 +20,7 @@ int main(int argc, char * argv []) {
 
     if (argc != 7) {
         std::cerr << "Not enough parameters!!! The usage is as follows:\n"
-                  << "\t bin_name rc date N t_f dt_min dt_max\n\n"
+                  << "\t " << argv[0] << " rc date N t_f dt_min dt_max\n\n"
                   << "Meanings of the options are:\n"
                   << "\t rc The configuration file\n"
                   << "\t date Time stamp in whatever format you want, but it should be preferably YYYY-MM-DD-HH-MM-SS\n"
@@ -33,7 +33,7 @@ int main(int argc, char * argv []) {
 
         return 1;
     } else {
-        for (int i = i; i < argc ; i++) {
+        for (int i = 1; i < argc ; i++) {
             argv_s.push_back(argv[i]);
         }
     }
@@ -63,7 +63,7 @@ int main(int argc, char * argv []) {
 
     // FIXME must be configurable from a file
     // Add a single source
-    sources.push_back({1,1e19, 0.1, 0.1, 0.1, 0.3, 0.5, 1e-7});
+    csv2arrayArrayDouble(fnames.at(0), sources, delim);
 
     // Generate a residual vector
     std::cout << "Generating a residual vector: "; std::cout.flush();
@@ -77,16 +77,13 @@ int main(int argc, char * argv []) {
 
     // Output the data into files:
     // Output the pulsar parameters
-    pulsar2csv (fnames[0], pulsars, delim);
+    pulsar2csv (fnames.at(1), pulsars, delim);
 
     // Output the schedule
-    arraysShortDouble2csv (fnames[1], indices, Times, delim);
-
-    // Sources parameters
-    arrayArrayDouble2csv (fnames[2], sources, delim);
+    arraysShortDouble2csv (fnames.at(2), indices, Times, delim);
 
     // Residuals out
-    arrayDouble2csv (fnames[3], r, delim);
+    arrayDouble2csv (fnames.at(3), r, delim);
 
     return 0;
 }
