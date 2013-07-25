@@ -38,7 +38,7 @@ inline double omegaReduced (const double omega0) {
     return pow(omega0, -1./3);
 }
 
-inline double Phi(const double t, const double omega0) {
+inline double PhiDash(const double t, const double omega0) {
     // Make a simplification here as well
     //return 1./(32 * pow(M, 5./3)) * ( pow(omega0, -5./3) - pow(omegaReduced(t, omega0, M), 5));
     return pow(omegaReduced (omega0), -3) * t;
@@ -56,8 +56,8 @@ std::vector<double> gravWaveContrib (const double t, dvec& e, const double omega
     double zeta = M/D;
     dvec gw (2);
 
-    double a = - sin( 2 * (Phi(t, omega0) - Phi0) ) * (1 + pow(cos(iota), 2)),
-           b = - 2 * cos( 2 * (Phi(t, omega0) - Phi0) ) * cos(iota);
+    double a = - sin( 2 * (PhiDash(t, omega0)) ) * (1 + pow(cos(iota), 2)),
+           b = - 2 * cos( 2 * (PhiDash(t, omega0)) ) * cos(iota);
 
     gw[0] = zeta * omegaReduced(omega0) * ( a * cos(2*psi) +  b * sin(2*psi) );
     gw[1] = zeta * omegaReduced(omega0) * ( a * sin(2*psi) -  b * cos(2*psi) );
@@ -78,10 +78,10 @@ dvec amplitude (dvec& e) {
 
     dvec a (4);
 
-    a[0] =  zeta * ( b * cos (Phi0) * cos (2*psi) + 2 * c * sin (Phi0) * sin (2*psi) );
-    a[1] = -zeta * ( b * sin (Phi0) * cos (2*psi) + 2 * c * cos (Phi0) * sin (2*psi) );
-    a[2] =  zeta * ( b * cos (Phi0) * sin (2*psi) + 2 * c * sin (Phi0) * cos (2*psi) );
-    a[3] = -zeta * ( b * sin (Phi0) * sin (2*psi) + 2 * c * cos (Phi0) * cos (2*psi) );
+    a[0] =  zeta * ( b * cos (2*Phi0) * cos (2*psi) + 2 * c * sin (2*Phi0) * sin (2*psi) );
+    a[1] = -zeta * ( b * sin (2*Phi0) * cos (2*psi) + 2 * c * cos (2*Phi0) * sin (2*psi) );
+    a[2] =  zeta * ( b * cos (2*Phi0) * sin (2*psi) + 2 * c * sin (2*Phi0) * cos (2*psi) );
+    a[3] = -zeta * ( b * sin (2*Phi0) * sin (2*psi) + 2 * c * cos (2*Phi0) * cos (2*psi) );
 
     return a;
 }
@@ -92,10 +92,10 @@ dvec basis (const double t, dvec& intrinsic, dvec& u_p) {
 
     dvec A, F = antennaPattern (intrinsic, u_p);
 
-    A.push_back(F.at(0) * omegaReduced(omega0) * sin (2 * Phi(t, omega0)));
-    A.push_back(F.at(0) * omegaReduced(omega0) * cos (2 * Phi(t, omega0)));
-    A.push_back(F.at(1) * omegaReduced(omega0) * sin (2 * Phi(t, omega0)));
-    A.push_back(F.at(1) * omegaReduced(omega0) * cos (2 * Phi(t, omega0)));
+    A.push_back(F.at(0) * omegaReduced(omega0) * sin (2 * PhiDash(t, omega0)));
+    A.push_back(F.at(0) * omegaReduced(omega0) * cos (2 * PhiDash(t, omega0)));
+    A.push_back(F.at(1) * omegaReduced(omega0) * sin (2 * PhiDash(t, omega0)));
+    A.push_back(F.at(1) * omegaReduced(omega0) * cos (2 * PhiDash(t, omega0)));
 
     return A;
 }
