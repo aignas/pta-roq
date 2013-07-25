@@ -137,10 +137,21 @@ int main(int argc, char * argv []) {
 
     // Protected code
     try {
+        std::clock_t start;
+        double duration;
+        start = std::clock();
         genCovarianceMatrix (C_inv, G::pulsars, G::indices, G::Times, true, false, false, false);
-        greedyReducedBasis (totalNumber, getData, C_inv, epsilon, RB_params, RB, Grammian, templateNorms, sigma, true);
+        duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+        std::cout << duration << std::endl;
+        greedyReducedBasis (totalNumber, getData, C_inv, epsilon, RB_params, RB, Grammian, templateNorms, sigma, false);
+        duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+        std::cout << duration << std::endl;
         greedyEIMpoints (RB_params, RB, EIM_indices, EIM_points, interpolationMatrix);
+        duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+        std::cout << duration << std::endl;
         constructROQ (data, data_tilda, EIM_indices, Grammian, interpolationMatrix);
+        duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+        std::cout << duration << std::endl;
 
         // Output the basis params and error to a file
         arrayArrayDouble2csv (fnames[3], RB_params, delim);
