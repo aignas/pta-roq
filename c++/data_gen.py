@@ -14,6 +14,7 @@ dt_max="2"
 
 data_gen = "bin/data_generator"
 data_gen_rc = "rc/data-IPTA-like"
+data_gen_source_rc = data_gen_rc + "-sources-1"
 
 # Make the binaries, just in case
 call(["make"])
@@ -21,4 +22,4 @@ call(["make"])
 for i in xrange(1,7):
   pulsarNumber = str(6*i)
   stamp_tmp = stamp + "-" + str(i)
-  call([data_gen, data_gen_rc, stamp_tmp, pulsarNumber, t_final, dt_min, dt_max])
+  call([data_gen, data_gen_rc, stamp_tmp, data_gen_source_rc, pulsarNumber, t_final, dt_min, dt_max])
