@@ -240,7 +240,7 @@ void constructInterpolant (std::vector<std::vector<double> > & RB,
     data_out.resize(h.size());
 
     for (unsigned i = 0; i < N; i++) {
-        axpyProduct(c_tmp.at(i), RB.at(i), data_out);
+        axpyProduct(c_tmp.at(i), RB.at(i), 1, data_out);
     }
 }
 
@@ -272,7 +272,7 @@ void greedyEIMpoints (std::vector<std::vector<double> > & RB_param,
         // Construct the interpolant
         constructInterpolant (RB, RB.at(i), idx_out, A_out, error);
         // Find the error
-        axpyProduct(-1, RB.at(i), error);
+        axpyProduct(-1, RB.at(i), 1, error);
 
         idx_out.push_back(0);
         points_out.push_back(0);

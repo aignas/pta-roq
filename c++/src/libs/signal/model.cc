@@ -10,26 +10,23 @@
 // load the linear algebra helpers
 #include "../linalg.hh"
 
-dvec antennaPattern (dvec& intrinsic, dvec& u_p) {
+void antennaPattern (dvec& intrinsic, dvec& u_p, dvec& out) {
     // Using at method makes checks whether we are out of bounds. It is just better to
     // be sure.
     UnitVectors v (intrinsic.at(0), intrinsic.at(1));
+    // Initialise some parameters
     dvec vm = v.m(),
          vn = v.n(),
          vOmega = v.Omega();
 
-    // Initialise some parameters
-    dvec F (2);
-
     // Calculate three dot products
-    double d1 = dotProduct(vm, u_p),
-           d2 = dotProduct(vn, u_p),
-           d3 = dotProduct(vOmega, u_p);
+    const double d1 = dotProduct(vm, u_p),
+                 d2 = dotProduct(vn, u_p),
+                 d3 = dotProduct(vOmega, u_p);
 
-    F[0] = 0.5 * ( d1 + d2 ) * ( d1 - d2 ) / ( 1 + d3 );
-    F[1] = ( d1 * d2 ) / ( 1 + d3 );
-
-    return F;
+    out.resize(2);
+    out[0] = 0.5 * ( d1 + d2 ) * ( d1 - d2 ) / ( 1 + d3 );
+    out[1] = ( d1 * d2 ) / ( 1 + d3 );
 }
 
 inline double omegaReduced (const double omega0) {
@@ -44,80 +41,43 @@ inline double PhiDash(const double t, const double omega0) {
     return pow(omegaReduced (omega0), -3) * t;
 }
 
-std::vector<double> gravWaveContrib (const double t, dvec& e, const double omega0) {
+void amplitude (dvec& e, dvec& out) {
     // Assign the intrinsic parameters to the names
-    double M    = e.at(0),
-           D    = e.at(1),
-           iota = e.at(2),
-           Phi0 = e.at(3),
-           psi  = e.at(4);
+    const double zeta = e.at(0),
+                 iota = e.at(1),
+                 phi0 = e.at(2),
+                 psi  = e.at(3),
+                 // Assign some temp variables:
+                 c = cos(iota),
+                 b = 1 + pow(c, 2);
 
-    // Create some temp vars
-    double zeta = M/D;
-    dvec gw (2);
-
-    double a = - sin( 2 * (PhiDash(t, omega0)) ) * (1 + pow(cos(iota), 2)),
-           b = - 2 * cos( 2 * (PhiDash(t, omega0)) ) * cos(iota);
-
-    gw[0] = zeta * omegaReduced(omega0) * ( a * cos(2*psi) +  b * sin(2*psi) );
-    gw[1] = zeta * omegaReduced(omega0) * ( a * sin(2*psi) -  b * cos(2*psi) );
-
-    return gw;
+    out.resize(4);
+    out[0] =  zeta * ( b * cos (2*phi0) * cos (2*psi) + 2 * c * sin (2*phi0) * sin (2*psi) );
+    out[1] = -zeta * ( b * sin (2*phi0) * cos (2*psi) + 2 * c * cos (2*phi0) * sin (2*psi) );
+    out[2] =  zeta * ( b * cos (2*phi0) * sin (2*psi) + 2 * c * sin (2*phi0) * cos (2*psi) );
+    out[3] = -zeta * ( b * sin (2*phi0) * sin (2*psi) + 2 * c * cos (2*phi0) * cos (2*psi) );
 }
 
-dvec amplitude (dvec& e) {
+void basis (const double t, dvec& intrinsic, dvec& u_p, dvec& out, double delta) {
     // Assign the intrinsic parameters to the names
-    double zeta = e.at(0) / e.at(1),
-           iota = e.at(2),
-           Phi0 = e.at(3),
-           psi  = e.at(4);
+    const double omega0 = intrinsic.at(2),
+                 // The following expressions can only be used in the approximation,
+                 // that the frequency of the signal from the SMBHB doesn't change.
+                 // Otherwise it is not possible.
+                 a = sin(2 * PhiDash(t, omega0)),
+                 b = sin(2 * PhiDash(delta, omega0)),
+                 c = cos(2 * PhiDash(t, omega0)),
+                 d = cos(2 * PhiDash(delta, omega0));
 
-    // Assign some temp variables:
-    double c = cos(iota);
-    double b = 1 + pow(c, 2);
+    dvec F;
+    antennaPattern (intrinsic, u_p, F);
 
-    dvec a (4);
-
-    a[0] =  zeta * ( b * cos (2*Phi0) * cos (2*psi) + 2 * c * sin (2*Phi0) * sin (2*psi) );
-    a[1] = -zeta * ( b * sin (2*Phi0) * cos (2*psi) + 2 * c * cos (2*Phi0) * sin (2*psi) );
-    a[2] =  zeta * ( b * cos (2*Phi0) * sin (2*psi) + 2 * c * sin (2*Phi0) * cos (2*psi) );
-    a[3] = -zeta * ( b * sin (2*Phi0) * sin (2*psi) + 2 * c * cos (2*Phi0) * cos (2*psi) );
-
-    return a;
-}
-
-dvec basis (const double t, dvec& intrinsic, dvec& u_p) {
-    // Assign the intrinsic parameters to the names
-    double omega0 = intrinsic.at(2);
-
-    dvec A, F = antennaPattern (intrinsic, u_p);
-
-    A.push_back(F.at(0) * omegaReduced(omega0) * sin (2 * PhiDash(t, omega0)));
-    A.push_back(F.at(0) * omegaReduced(omega0) * cos (2 * PhiDash(t, omega0)));
-    A.push_back(F.at(1) * omegaReduced(omega0) * sin (2 * PhiDash(t, omega0)));
-    A.push_back(F.at(1) * omegaReduced(omega0) * cos (2 * PhiDash(t, omega0)));
-
-    return A;
-}
-
-double pulsarTerm (const double t, dvec& e, dvec& i, const double L, dvec& pUV) {
-    // unpack the parameters
-    double theta  = i.at(0),
-           phi    = i.at(1),
-           omega0 = i.at(2);
-
-    // Initialize the unit vector data struct
-    UnitVectors v (theta, phi);
-    dvec vOmega = v.Omega();
-
-    // Calculate the time at the pulsar
-    double tp = t - L * (1 + dotProduct(vOmega, pUV));
-
-    // Calculate
-    dvec F = antennaPattern(i, pUV),
-         s = gravWaveContrib(tp, e, omega0);
-
-    return dotProduct(F,s);
+    // This fixes some numerical issues with sin(i+j) formula if i >> j
+    out.resize(4);
+    out[0] = F.at(0) * omegaReduced(omega0) * (a * d - c * b);
+    out[1] = F.at(0) * omegaReduced(omega0) * (c * d + a * b); 
+    out[2] = F.at(1) * omegaReduced(omega0) * (a * d - c * b); 
+    out[3] = F.at(1) * omegaReduced(omega0) * (c * d + a * b); 
 }
 
 double noise (const double t, const double whiteNoise, dvec& redNoise, dvec& powerLawNoise) {
@@ -131,25 +91,21 @@ double noise (const double t, const double whiteNoise, dvec& redNoise, dvec& pow
     return white + red + powerLaw;
 }
 
-double individualSource (const double t, dvec& params, const double L, dvec& pUV) {
-    dvec extrinsic (5, 0),
-         intrinsic (3, 0);
+double individualSource (const double t, dvec& params, const double L, dvec& pUV, bool includePulsarTerm) {
+    dvec extrinsic (4, 0),
+         intrinsic (3, 0),
+         a, A, A_p;
 
     // Translate params
     extrinsic[0] = params.at(0);
     extrinsic[1] = params.at(1);
     extrinsic[2] = params.at(2);
     extrinsic[3] = params.at(3);
-    extrinsic[4] = params.at(4);
-    intrinsic[0] = params.at(5);
-    intrinsic[1] = params.at(6);
-    intrinsic[2] = params.at(7);
+    intrinsic[0] = params.at(4);
+    intrinsic[1] = params.at(5);
+    intrinsic[2] = params.at(6);
 
-    if (fabs(extrinsic[0]) <  1e-9) {
-        throw "Error: The chirp mass of the source is too low";
-    } else if (fabs(extrinsic[1]) < 1e-9) {
-        throw "Error: The distance to the source is too low";
-    } else if (fabs(intrinsic[0]) < 1e-9 or fabs(intrinsic[0] - _M_PI) < 1e-9) {
+    if (fabs(intrinsic[0]) < 1e-9 or fabs(intrinsic[0] - _M_PI) < 1e-9) {
         throw "Error: The azimuthal angle is close to the coordinate singularity";
     } else if (fabs(intrinsic[1]) > _M_PI) {
         throw "Error: The polar angle is out of range (-pi;pi)";
@@ -159,14 +115,24 @@ double individualSource (const double t, dvec& params, const double L, dvec& pUV
     // mass out of detection range
     // iota, psi out of range
 
-    dvec a = amplitude(extrinsic),
-         A = basis (t, intrinsic, pUV);
+    // Calculate the time at the pulsar
+    UnitVectors v (intrinsic.at(0), intrinsic.at(1));
+    dvec vOmega = v.Omega();
+    double delta = L * (1 + dotProduct(vOmega, pUV));
 
-    // FIXME Do not use the pulsar term for the time being. Think of a switch to implement it
-    //double p = pulsarTerm (t, extrinsic, intrinsic, L, pUV);
-    double p = 0;
+    amplitude(extrinsic, a);
+    basis(t, intrinsic, pUV, A);
+    basis(t, intrinsic, pUV, A_p, delta);
 
-    return dotProduct(a,A) + p;
+    // Do not use the pulsarTerm function, as it is giving nonsenses because tp >> 1,
+    // which means that tp + something will be not precise when we take a sine of it.
+    // This is now implemented with the additional (optional) parameter in the basis
+    // function.
+    if (includePulsarTerm) {
+        axpyProduct(-1,A_p,A);
+    }
+
+    return dotProduct(a,A);
 }
 
 // FIXME: Here I need a structure, so that I would have only a single pulsar properties
@@ -197,4 +163,45 @@ double residual (const double t, const unsigned int N, std::vector<dvec>& source
     }
 
     return Signal;
+}
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Functions which should not be used !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// NOTE This function doesn't give correct results at t >> 1 because of the phidash
+// approximation. This function should not be used!!!!
+void gravWaveContrib (const double t, dvec& e, const double omega0, dvec& out) {
+    // Assign the intrinsic parameters to the names
+    const double zeta = e.at(0),
+                 iota = e.at(1),
+                 phi0 = e.at(2),
+                 psi  = e.at(3);
+
+    // Create some temp vars
+    const double a = - sin( 2 * (PhiDash(t, omega0) - phi0) ) * (1 + pow(cos(iota), 2)),
+                 b = - 2 * cos( 2 * (PhiDash(t, omega0) - phi0)) * cos(iota);
+
+    out.resize(2);
+    out[0] = zeta * omegaReduced(omega0) * ( a * cos(2*psi) +  b * sin(2*psi) );
+    out[1] = zeta * omegaReduced(omega0) * ( a * sin(2*psi) -  b * cos(2*psi) );
+}
+
+// Since this uses the gravWaveContrib, this shouldn't be used either!!!!!
+double pulsarTerm (const double t, dvec& e, dvec& i, const double L, dvec& pUV) {
+    // unpack the parameters
+    double theta  = i.at(0),
+           phi    = i.at(1),
+           omega0 = i.at(2);
+
+    // Initialize the unit vector data struct
+    UnitVectors v (theta, phi);
+    dvec vOmega = v.Omega();
+
+    // Calculate the time at the pulsar
+    double tp = t - L * (1 + dotProduct(vOmega, pUV));
+
+    // Calculate
+    dvec F, s;
+    antennaPattern(i, pUV, F);
+    gravWaveContrib(tp, e, omega0, s);
+
+    return dotProduct(F,s);
 }

@@ -174,4 +174,4 @@ void findMin (dvec & A, long & argmin_out, double & min_out);
 /**
  * Constant vector product
  */
-void axpyProduct(double a, dvec & x, dvec & y);
+void axpyProduct(const double a, dvec & x, const double p, dvec & y);

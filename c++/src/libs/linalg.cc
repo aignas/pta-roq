@@ -29,8 +29,8 @@ double dotProduct (dvec& x, dvec& y) {
     return r;
 }
 
-void axpyProduct(double a, dvec & x, dvec & y) {
-    cblas_daxpy(y.size(), a, &x[0], 1, &y[0], 1);
+void axpyProduct(const double a, dvec & x, const double p, dvec & y) {
+    cblas_daxpy(y.size(), a, &x[0], p, &y[0], 1);
 }
 
 void matrixVectorProduct (dvec& A, dvec& x, dvec& y) {

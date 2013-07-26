@@ -481,14 +481,11 @@ int parseDataRC (const std::string & filename, std::string & stamp, std::vector<
         separator = helper::getKey (fin, "sep");
         delim = helper::getKey (fin,"delim");
 
-        dir.push_back(helper::getKey (fin, "dir.out"));
-        dir.push_back(helper::getKey (fin, "dir.in"));
-        prefix.push_back(helper::getKey (fin, "prefix.out"));
-        prefix.push_back(helper::getKey (fin, "prefix.in"));
+        dir.push_back(helper::getKey (fin, "dir"));
+        prefix.push_back(helper::getKey (fin, "prefix"));
 
         // This ensures no bugs in the future
         fnames.clear();
-        fnames.push_back(helper::getKey(fin, "infile.source"));
         fnames.push_back(helper::getKey(fin, "outfile.pulsar"));
         fnames.push_back(helper::getKey(fin, "outfile.sched"));
         fnames.push_back(helper::getKey(fin, "outfile.resid"));
@@ -500,13 +497,6 @@ int parseDataRC (const std::string & filename, std::string & stamp, std::vector<
     }
 
     std::stringstream fnameFull;
-    // Generate the filenames for output data
-    for (unsigned i = 0; i < 1; i++) {
-        fnameFull.str(std::string());
-        fnameFull << dir[1] << "/" << prefix[1] << separator << fnames[i] << "." << ext;
-        fnames[i] = fnameFull.str();
-    }
-
     // Generate the filenames for output data
     for (unsigned i = 1; i < fnames.size(); i++) {
         fnameFull.str(std::string());

@@ -10,6 +10,8 @@
 const double _M_PI = 3.141592653589793238462643383279502884;
 #endif
 
+#define INCLUDEPULSARTERM false
+
 typedef std::vector<double> dvec;
 
 /**
@@ -18,8 +20,9 @@ typedef std::vector<double> dvec;
  *
  * @param extrinsic Intrinsic parameters of the GW source
  * @param pulsarUnitVector The unit vector into the direction of the pulsar
+ * @param out The output array
  */
-dvec antennaPattern (dvec& intrinsic, dvec& pulsarUnitVector);
+void antennaPattern (dvec& intrinsic, dvec& pulsarUnitVector, dvec& out);
 
 /**
  * Frequency evolution of the GW source
@@ -46,15 +49,17 @@ inline double Phi(const double t, const double omega0);
  * @param t Time when the residual is evaluated
  * @param intrinsic Intrinsic parameters of the GW source
  * @param omega The frequency of the source
+ * @param out The output array
  */
-std::vector<double> gravWaveContrib (const double t, dvec& extrinsic, const double omega);
+void gravWaveContrib (const double t, dvec& extrinsic, const double omega, dvec& out);
 
 /**
  * Amplitude of the wave
  *
  * @param intrinsic Intrinsic parameters of the GW source
+ * @param out The output array
  */
-dvec amplitude (dvec& intrinsic);
+void amplitude (dvec& intrinsic, dvec& out);
 
 /**
  * The basis functions for the wave
@@ -62,8 +67,10 @@ dvec amplitude (dvec& intrinsic);
  * @param t Time when the residual is evaluated
  * @param extrinsic The extrinsic parameters of the source
  * @param pulsarUnitVector The unit vector into the direction of the pulsar
+ * @param out The output array
+ * @param delta The time lag, which corresponds to t_pulsar = t - delta
  */
-dvec basis (const double t, dvec& intrinsic, dvec& pulsarUnitVector);
+void basis (const double t, dvec& intrinsic, dvec& pulsarUnitVector, dvec& out, double delta = 0);
 
 /**
  * The pulsar term for the residual
@@ -73,7 +80,7 @@ dvec basis (const double t, dvec& intrinsic, dvec& pulsarUnitVector);
  * @param extrinsic The extrinsic parameters of the source
  * @param pulsarCoords The polar coordinates of a pulsar
  */
-double pulsarTerm (const double t, dvec& extrinsic, dvec& intrinsic, dvec& pulsarCoords);
+double pulsarTerm (const double t, dvec& extrinsic, dvec& intrinsic, const double L, dvec& pulsarCoords);
 
 /**
  * Noise function
@@ -93,7 +100,8 @@ double noise (const double t, const double whiteNoise, dvec& redNoise, dvec& pow
  * @param L The distance to some selected pulsar
  * @param pulsarUnitVector The unit vector into the direction of the pulsar
  */
-double individualSource (const double t, dvec& params, const double L, dvec& pulsarUnitVector);
+double individualSource (const double t, dvec& params, const double L, dvec& pulsarUnitVector, 
+        bool includePulsarTerm = INCLUDEPULSARTERM);
 
 /**
  * The residual for all the sources
@@ -105,4 +113,5 @@ double individualSource (const double t, dvec& params, const double L, dvec& pul
  * @param pulsarProperties The coordinates and the noise properties of the pulsar
  * @param noise whether to include noise in the signal
  */
-double residual (const double t, const unsigned int N, std::vector<dvec>& sources, Pulsar& pulsarProperties, bool noise);
+double residual (const double t, const unsigned int N, std::vector<dvec>& sources, Pulsar& pulsarProperties,
+        bool noise);
