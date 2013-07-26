@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 
+#include "test/signal/model.hh"
 #include "test/linalg.hh"
 #include "test/roq.hh"
 #include "test/iocsv.hh"
@@ -12,6 +13,11 @@ int main () {
     std::cout << "\nLaunching the testing suite" << std::endl;
 
     unsigned int r = 0, t = 0;
+
+    title_wrap("signal/model");
+    // This test is not right, because of floating point number addition in the formula
+    // pulsarTerm. That formula shouldn't be used;
+    //testing_wrap(test_pulsarTerm, "pulsarTerm", r, t);
 
     title_wrap("linalg");
     testing_wrap(test_arrayEqual, "arrayEqual", r, t);

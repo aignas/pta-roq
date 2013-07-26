@@ -18,12 +18,13 @@ int main(int argc, char * argv []) {
     const double week = 7 * 3600 * 24,
                  year = 52 * week;
 
-    if (argc != 7) {
+    if (argc != 8) {
         std::cerr << "Not enough parameters!!! The usage is as follows:\n"
-                  << "\t " << argv[0] << " rc date N t_f dt_min dt_max\n\n"
+                  << "\t " << argv[0] << " rc date rc_source N t_f dt_min dt_max\n\n"
                   << "Meanings of the options are:\n"
                   << "\t rc The configuration file\n"
                   << "\t date Time stamp in whatever format you want, but it should be preferably YYYY-MM-DD-HH-MM-SS\n"
+                  << "\t rc_source The parameters for the source\n"
                   << "\t N The pulsar number for the simulation\n"
                   << "\t t_f Final simulation time in years\n"
                   << "\t dt_min Minimum interval between measurements for some pulsar (in weeks)\n"
@@ -41,10 +42,10 @@ int main(int argc, char * argv []) {
     parseDataRC (argv_s[0], argv_s[1], fnames, delim);
 
     // Read the parameters
-    const unsigned int pulsarNumber = helper::convertToUnsignedInt(argv_s[2]);
-    const double t_final = year * helper::convertToDouble(argv_s[3]),
-                 dt_min = week * helper::convertToDouble(argv_s[4]),
-                 dt_max = week * helper::convertToDouble(argv_s[5]);
+    const unsigned int pulsarNumber = helper::convertToUnsignedInt(argv_s[3]);
+    const double t_final = year * helper::convertToDouble(argv_s[4]),
+                 dt_min = week * helper::convertToDouble(argv_s[5]),
+                 dt_max = week * helper::convertToDouble(argv_s[6]);
 
     // Declare all the data structures
     // Randomize the starting times?
@@ -63,7 +64,7 @@ int main(int argc, char * argv []) {
 
     // FIXME must be configurable from a file
     // Add a single source
-    csv2arrayArrayDouble(fnames.at(0), sources, delim);
+    csv2arrayArrayDouble(argv_s[2], sources, delim);
 
     // Generate a residual vector
     std::cout << "Generating a residual vector: "; std::cout.flush();
@@ -77,13 +78,13 @@ int main(int argc, char * argv []) {
 
     // Output the data into files:
     // Output the pulsar parameters
-    pulsar2csv (fnames.at(1), pulsars, delim);
+    pulsar2csv (fnames.at(0), pulsars, delim);
 
     // Output the schedule
-    arraysShortDouble2csv (fnames.at(2), indices, Times, delim);
+    arraysShortDouble2csv (fnames.at(1), indices, Times, delim);
 
     // Residuals out
-    arrayDouble2csv (fnames.at(3), r, delim);
+    arrayDouble2csv (fnames.at(2), r, delim);
 
     return 0;
 }
