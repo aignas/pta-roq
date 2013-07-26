@@ -7,15 +7,12 @@
 #   - delim The delimiter used
 #   - sep The separator used in the filename
 #
-#   - dir.in The output directory
-#   - dir.out The output directory
-#   - prefix.in The prefix for the data input files
-#   - prefix.out The prefix for the data output files
+#   - dir The output directory
+#   - prefix The prefix for the data output files
 #
 #   - outfile.pulsar Output pulsar parameters
 #   - outfile.sched Output time stamps and indices of the timed pulsars
 #   - outfile.resid Output the residuals
-#   - infile.sources The source parameters
 
 # Extension of the files
 ext: csv
@@ -25,16 +22,11 @@ delim: ,
 sep: -
 
 # Data dir
-dir.out: data
-dir.in:  data
+dir: data
 # Data files prefix
-prefix.out: dat
-prefix.in:  setup
+prefix: dat
 
 # The filenames for outputting various stuff.
 outfile.pulsar: pulsars
 outfile.sched: schedule
 outfile.resid: residuals
-
-# The sources
-infile.source: sources-1
