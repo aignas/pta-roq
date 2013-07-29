@@ -150,12 +150,14 @@ namespace helper {
     }
 }
 
-int csv2arrayDouble (const std::string filename, std::vector<double> & array, const std::string delim) {
+int csv2arrayDouble (const std::string filename, std::vector<double> & array, const std::string delim, bool debug) {
     std::ifstream fin (filename);
     std::string value;
 
     if (fin.is_open()) {
-        std::cout << "Reading array data from " << filename << std::endl;
+        if (debug) {
+            std::cout << "Reading array data from " << filename << std::endl;
+        }
         array.clear();
 
         while (0 == helper::removeComments(fin,value)) {
@@ -171,13 +173,15 @@ int csv2arrayDouble (const std::string filename, std::vector<double> & array, co
     return 0;
 }
 
-int arrayDouble2csv (const std::string filename, std::vector<double> & array, const std::string delim) {
+int arrayDouble2csv (const std::string filename, std::vector<double> & array, const std::string delim, bool debug) {
     std::ofstream fout (filename);
     fout.precision(15);
     fout << std::scientific;
 
     if (fout.is_open()) {
-        std::cout << "Saving array data into " << filename << std::endl;
+        if (debug) {
+            std::cout << "Saving array data into " << filename << std::endl;
+        }
 
         for (unsigned i = 0; i < array.size(); i++) {
             fout << array.at(i) << "\n";
@@ -192,14 +196,16 @@ int arrayDouble2csv (const std::string filename, std::vector<double> & array, co
     return 0;
 }
 
-int pulsar2csv (const std::string filename, std::vector<Pulsar> & pulsars, const std::string delim) {
+int pulsar2csv (const std::string filename, std::vector<Pulsar> & pulsars, const std::string delim, bool debug) {
     std::ofstream fout (filename);
     fout.precision(15);
     fout << std::scientific;
     const unsigned int pulsarNumber = pulsars.size();
 
     if (fout.is_open()) {
-        std::cout << "Saving pulsar data into " << filename << std::endl;
+        if (debug) {
+            std::cout << "Saving pulsar data into " << filename << std::endl;
+        }
         std::vector<double> tmp;
         for (unsigned i = 0; i < pulsarNumber; i++) {
             pulsars[i].getAll(tmp);
@@ -220,13 +226,15 @@ int pulsar2csv (const std::string filename, std::vector<Pulsar> & pulsars, const
     return 0;
 }
 
-int csv2pulsar (const std::string filename, std::vector<Pulsar> & pulsars, const std::string delim) {
+int csv2pulsar (const std::string filename, std::vector<Pulsar> & pulsars, const std::string delim, bool debug) {
     std::ifstream fin (filename);
     std::string value;
 
     // check if the file is really open
     if (fin.is_open()) {
-        std::cout << "Reading pulsar data from " << filename << std::endl;
+        if (debug) {
+            std::cout << "Reading pulsar data from " << filename << std::endl;
+        }
 
         std::vector<std::string> elements;
         std::vector<double> elements_dbl;
@@ -254,13 +262,15 @@ int csv2pulsar (const std::string filename, std::vector<Pulsar> & pulsars, const
     return 0;
 }
 
-int arraysLongDouble2csv (const std::string filename, std::vector<long> & iarray, std::vector<double> & darray, const std::string delim) {
+int arraysLongDouble2csv (const std::string filename, std::vector<long> & iarray, std::vector<double> & darray, const std::string delim, bool debug) {
     std::ofstream fout (filename);
     fout.precision(15);
     fout << std::scientific;
 
     if (fout.is_open()) {
-        std::cout << "Saving time-stamp data into " << filename << std::endl;
+        if (debug) {
+            std::cout << "Saving time-stamp data into " << filename << std::endl;
+        }
         for (unsigned i = 0; i < iarray.size(); i++) {
             fout << iarray.at(i) << delim << darray.at(i) << std::endl;
         }
@@ -273,13 +283,15 @@ int arraysLongDouble2csv (const std::string filename, std::vector<long> & iarray
     return 0;
 }
 
-int arraysShortDouble2csv (const std::string filename, std::vector<unsigned short> & iarray, std::vector<double> & darray, const std::string delim) {
+int arraysShortDouble2csv (const std::string filename, std::vector<unsigned short> & iarray, std::vector<double> & darray, const std::string delim, bool debug) {
     std::ofstream fout (filename);
     fout.precision(15);
     fout << std::scientific;
 
     if (fout.is_open()) {
-        std::cout << "Saving time-stamp data into " << filename << std::endl;
+        if (debug) {
+            std::cout << "Saving time-stamp data into " << filename << std::endl;
+        }
         for (unsigned i = 0; i < iarray.size(); i++) {
             fout << iarray.at(i) << delim << darray.at(i) << std::endl;
         }
@@ -292,18 +304,20 @@ int arraysShortDouble2csv (const std::string filename, std::vector<unsigned shor
     return 0;
 }
 
-int arrayArrayDouble2csv (const std::string filename, std::vector<std::vector<double> > & array, const std::string delim) {
+int arrayArrayDouble2csv (const std::string filename, std::vector<std::vector<double> > & array, const std::string delim, bool debug) {
     std::ofstream fout (filename);
     fout.precision(15);
     fout << std::scientific;
 
     if (fout.is_open()) {
-        std::cout << "Saving array data into " << filename << std::endl;
+        if (debug) {
+            std::cout << "Saving array data into " << filename << std::endl;
+        }
         for (unsigned i = 0; i < array.size(); i++) {
-            fout << array.at(i).at(0);
+            fout << array[i][0];
 
-            for (unsigned j = 1; j < array.at(i).size(); j++) {
-                fout << delim << array.at(i).at(j);
+            for (unsigned j = 1; j < array[i].size(); j++) {
+                fout << delim << array[i][j];
             }
 
             fout << std::endl;
@@ -318,13 +332,15 @@ int arrayArrayDouble2csv (const std::string filename, std::vector<std::vector<do
     return 0;
 }
 
-int csv2arraysShortDouble (const std::string filename, std::vector<unsigned short> & iarray, std::vector<double> & darray, const std::string delim) {
+int csv2arraysShortDouble (const std::string filename, std::vector<unsigned short> & iarray, std::vector<double> & darray, const std::string delim, bool debug) {
     std::ifstream fin (filename);
     std::string value;
 
     // check if the file is really open
     if (fin.is_open()) {
-        std::cout << "Reading time-stamp data from " << filename << std::endl;
+        if (debug) {
+            std::cout << "Reading time-stamp data from " << filename << std::endl;
+        }
 
         std::vector<std::string> elements;
         iarray.clear();
@@ -346,13 +362,15 @@ int csv2arraysShortDouble (const std::string filename, std::vector<unsigned shor
     return 0;
 }
 
-int csv2arrayArrayUnsignedInt (const std::string filename, std::vector<std::vector<unsigned int> > & array, const std::string delim) {
+int csv2arrayArrayUnsignedInt (const std::string filename, std::vector<std::vector<unsigned int> > & array, const std::string delim, bool debug) {
     std::ifstream fin (filename);
     std::string value;
 
     // check if the file is really open
     if (fin.is_open()) {
-        std::cout << "Reading array data from " << filename << std::endl;
+        if (debug) {
+            std::cout << "Reading array data from " << filename << std::endl;
+        }
 
         std::vector<std::string> elements;
         std::vector<unsigned int> elements_int;
@@ -380,13 +398,15 @@ int csv2arrayArrayUnsignedInt (const std::string filename, std::vector<std::vect
     return 0;
 }
 
-int csv2arrayArrayDouble (const std::string filename, std::vector<std::vector<double> > & array, const std::string delim) {
+int csv2arrayArrayDouble (const std::string filename, std::vector<std::vector<double> > & array, const std::string delim, bool debug) {
     std::ifstream fin (filename);
     std::string value;
 
     // check if the file is really open
     if (fin.is_open()) {
-        std::cout << "Reading array data from " << filename << std::endl;
+        if (debug) {
+            std::cout << "Reading array data from " << filename << std::endl;
+        }
 
         std::vector<std::string> elements;
         std::vector<double> elements_dbl;
@@ -414,14 +434,16 @@ int csv2arrayArrayDouble (const std::string filename, std::vector<std::vector<do
     return 0;
 }
 
-int parseRoqRC (const std::string & filename, std::string & stamp, std::string & in_stamp, std::vector<std::string> & fnames, std::string & delim) {
+int parseRoqRC (const std::string & filename, std::string & stamp, std::string & in_stamp, std::vector<std::string> & fnames, std::string & delim, bool debug) {
     std::string ext, value, separator;
     std::vector<std::string> dir, prefix;
     std::ifstream fin (filename);
 
     // check if the file is really open
     if (fin.is_open()) {
-        std::cout << "Reading program parameters from " << filename << std::endl;
+        if (debug) {
+            std::cout << "Reading program parameters from " << filename << std::endl;
+        }
 
         ext = helper::getKey (fin, "ext");
         separator = helper::getKey (fin, "sep");
@@ -438,11 +460,11 @@ int parseRoqRC (const std::string & filename, std::string & stamp, std::string &
         fnames.push_back(helper::getKey(fin, "infile.sched"));
         fnames.push_back(helper::getKey(fin, "infile.resid"));
 
+        fnames.push_back(helper::getKey(fin, "outfile.rbparams"));
+        fnames.push_back(helper::getKey(fin, "outfile.rb"));
         fnames.push_back(helper::getKey(fin, "outfile.sched"));
         fnames.push_back(helper::getKey(fin, "outfile.eim"));
         fnames.push_back(helper::getKey(fin, "outfile.resid"));
-        fnames.push_back(helper::getKey(fin, "outfile.rb"));
-        fnames.push_back(helper::getKey(fin, "outfile.rbparams"));
 
         fin.close();
     } else {
@@ -468,14 +490,16 @@ int parseRoqRC (const std::string & filename, std::string & stamp, std::string &
     return 0;
 }
 
-int parseDataRC (const std::string & filename, std::string & stamp, std::vector<std::string> & fnames, std::string & delim) {
+int parseDataRC (const std::string & filename, std::string & stamp, std::vector<std::string> & fnames, std::string & delim, bool debug) {
     std::string ext, value, separator;
     std::vector<std::string> dir, prefix;
     std::ifstream fin (filename);
 
     // check if the file is really open
     if (fin.is_open()) {
-        std::cout << "Reading program parameters from " << filename << std::endl;
+        if (debug) {
+            std::cout << "Reading program parameters from " << filename << std::endl;
+        }
 
         ext = helper::getKey (fin, "ext");
         separator = helper::getKey (fin, "sep");
@@ -498,7 +522,7 @@ int parseDataRC (const std::string & filename, std::string & stamp, std::vector<
 
     std::stringstream fnameFull;
     // Generate the filenames for output data
-    for (unsigned i = 1; i < fnames.size(); i++) {
+    for (unsigned i = 0; i < fnames.size(); i++) {
         fnameFull.str(std::string());
         fnameFull << dir[0] << "/" << prefix[0] << separator << stamp << separator << fnames[i] << "." << ext;
         fnames[i] = fnameFull.str();
@@ -508,14 +532,16 @@ int parseDataRC (const std::string & filename, std::string & stamp, std::vector<
 }
 
 int csv2paramRanges (const std::string filename, std::vector<double> & params_min,
-        std::vector<double> & params_max, std::vector<unsigned int> & params_N, const std::string delim) {
+        std::vector<double> & params_max, std::vector<unsigned int> & params_N, const std::string delim, bool debug) {
     std::ifstream fin (filename);
     std::string value;
     std::vector<std::vector<std::string> > elements (3);
 
     // check if the file is really open
     if (fin.is_open()) {
-        std::cout << "Reading time-stamp data from " << filename << std::endl;
+        if (debug) {
+            std::cout << "Reading time-stamp data from " << filename << std::endl;
+        }
 
         params_min.clear();
         params_max.clear();

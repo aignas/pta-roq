@@ -15,7 +15,7 @@ int csv2array (std::string filename, std::vector<double> & array);
  * @param pulsars The array to store pulsar array in
  * @param The delimiter in the file
  */
-int csv2pulsar (const std::string filename, std::vector<Pulsar> & pulsars, const std::string delim);
+int csv2pulsar (const std::string filename, std::vector<Pulsar> & pulsars, const std::string delim, bool debug = false);
 
 /**
  * write pulsar data
@@ -24,7 +24,7 @@ int csv2pulsar (const std::string filename, std::vector<Pulsar> & pulsars, const
  * @param pulsars The array to use for writing
  * @param The delimiter in the file
  */
-int pulsar2csv (const std::string filename, std::vector<Pulsar> & pulsars, const std::string delim);
+int pulsar2csv (const std::string filename, std::vector<Pulsar> & pulsars, const std::string delim, bool debug = false);
 
 /**
  * write the schedule data
@@ -34,8 +34,8 @@ int pulsar2csv (const std::string filename, std::vector<Pulsar> & pulsars, const
  * @param darray The double array
  * @param The delimiter in the file
  */
-int arraysShortDouble2csv (const std::string filename, std::vector<unsigned short> & iarray, std::vector<double> & darray, const std::string delim);
-int arraysLongDouble2csv (const std::string filename, std::vector<long> & iarray, std::vector<double> & darray, const std::string delim);
+int arraysShortDouble2csv (const std::string filename, std::vector<unsigned short> & iarray, std::vector<double> & darray, const std::string delim, bool debug = false);
+int arraysLongDouble2csv (const std::string filename, std::vector<long> & iarray, std::vector<double> & darray, const std::string delim, bool debug = false);
 
 /**
  * read the schedule data
@@ -45,11 +45,11 @@ int arraysLongDouble2csv (const std::string filename, std::vector<long> & iarray
  * @param darray The double array
  * @param The delimiter in the file
  */
-int csv2arraysShortDouble (const std::string filename, std::vector<unsigned short> & iarray, std::vector<double> & darray, const std::string delim);
-int csv2arraysLongDouble (const std::string filename, std::vector<long> & iarray, std::vector<double> & darray, const std::string delim);
+int csv2arraysShortDouble (const std::string filename, std::vector<unsigned short> & iarray, std::vector<double> & darray, const std::string delim, bool debug = false);
+int csv2arraysLongDouble (const std::string filename, std::vector<long> & iarray, std::vector<double> & darray, const std::string delim, bool debug = false);
 
 int csv2paramRanges (const std::string filename, std::vector<double> & params_min,
-        std::vector<double> & params_max, std::vector<unsigned int> & params_N, const std::string delim);
+        std::vector<double> & params_max, std::vector<unsigned int> & params_N, const std::string delim, bool debug = false);
 
 /**
  * write the source data
@@ -58,7 +58,7 @@ int csv2paramRanges (const std::string filename, std::vector<double> & params_mi
  * @param sources An array of sources
  * @param The delimiter in the file
  */
-int arrayArrayDouble2csv (const std::string filename, std::vector<std::vector<double> > & sources, const std::string delim);
+int arrayArrayDouble2csv (const std::string filename, std::vector<std::vector<double> > & sources, const std::string delim, bool debug = false);
 
 
 /**
@@ -68,16 +68,16 @@ int arrayArrayDouble2csv (const std::string filename, std::vector<std::vector<do
  * @param sources An array of sources
  * @param The delimiter in the file
  */
-int csv2arrayArrayDouble (const std::string filename, std::vector<std::vector<double> > & sources, const std::string delim);
-int csv2arrayArrayUnsignedInt (const std::string filename, std::vector<std::vector<unsigned int> > & sources, const std::string delim);
+int csv2arrayArrayDouble (const std::string filename, std::vector<std::vector<double> > & sources, const std::string delim, bool debug = false);
+int csv2arrayArrayUnsignedInt (const std::string filename, std::vector<std::vector<unsigned int> > & sources, const std::string delim, bool debug = false);
 
-int arrayDouble2csv (const std::string filename, std::vector<double> & array, const std::string delim);
+int arrayDouble2csv (const std::string filename, std::vector<double> & array, const std::string delim, bool debug = false);
 
-int csv2arrayDouble (const std::string filename, std::vector<double> & array, const std::string delim);
+int csv2arrayDouble (const std::string filename, std::vector<double> & array, const std::string delim, bool debug = false);
 
-int parseDataRC (const std::string & filename, std::string & stamp, std::vector<std::string> & fnames, std::string & delim);
+int parseDataRC (const std::string & filename, std::string & stamp, std::vector<std::string> & fnames, std::string & delim, bool debug = false);
 
-int parseRoqRC (const std::string & filename, std::string & stamp, std::string & in_stamp, std::vector<std::string> & fnames, std::string & delim);
+int parseRoqRC (const std::string & filename, std::string & stamp, std::string & in_stamp, std::vector<std::string> & fnames, std::string & delim, bool debug = false);
 
 /**
  * Trim a string from the left
