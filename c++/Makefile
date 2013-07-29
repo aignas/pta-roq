@@ -3,8 +3,8 @@ MAKEDIR_P = mkdir -p
 COMPILER = g++ -fopenmp
 CFLAGS   = -g -std=c++11 -pedantic -Wall -O3
 LIBS     = -lgsl -L/usr/lib64/atlas/ -lcblas -lclapack -latlas
-#LIBS = -lgsl -L/usr/global/intel/mkl/10.2.6.038/lib/em64t \
--lmkl_lapack -lmkl_intel_lp64 -lmkl_core -lmkl_sequential
+#LIBS    = -lgsl -L/usr/global/intel/mkl/10.2.6.038/lib/em64t \
+	    -lmkl_lapack -lmkl_intel_lp64 -lmkl_core -lmkl_sequential
 
 # Some directory variables
 DIR_SRC     = src
