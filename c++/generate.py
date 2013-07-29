@@ -37,7 +37,7 @@ def gen_data():
 def gen_roq():
   for j in xrange(1,2):
     roq_gen_param_rc_tmp = roq_gen_param_rc + "-" + str(j)
-    for i in xrange(1,7):
+    for i in xrange(5,7):
       pulsarNumber = str(6*i)
       stamp_tmp_in = stamp_dat + "-" + str(i)
       stamp_tmp = stamp_roq + "-" + str(i) + "-param-" + str(j)
