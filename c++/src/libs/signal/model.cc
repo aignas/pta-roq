@@ -129,7 +129,7 @@ double individualSource (const double t, dvec& params, const double L, dvec& pUV
     // This is now implemented with the additional (optional) parameter in the basis
     // function.
     if (includePulsarTerm) {
-        axpyProduct(-1,A_p,A);
+        axpyProduct(-1,A_p,1,A);
     }
 
     return dotProduct(a,A);
@@ -151,7 +151,7 @@ double residual (const double t, const unsigned int N, std::vector<dvec>& source
     for (unsigned int i = 0; i < sources.size(); i++) {
         // FIXME Think whether I need an additional data structure here
         try {
-            Signal += individualSource(t, sources[i], L, pUV);
+            Signal += individualSource(t, sources[i], L, pUV, true);
         } catch (const char* mes) {
             std::cerr << mes << std::endl;
         }

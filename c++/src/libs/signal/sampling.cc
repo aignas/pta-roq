@@ -8,8 +8,10 @@
 #include "model.hh"
 #include "sampling.hh"
 
-void generateSample (std::vector<double>& out, std::vector<Pulsar> &pulsars,
-                     std::vector<unsigned short>& indices, std::vector<double>& Times,
+void generateSample (std::vector<double> & out,
+                     std::vector<Pulsar> & pulsars,
+                     std::vector<unsigned short> & indices, 
+                     std::vector<double> & Times,
                      std::vector<std::vector<double> > &sources,
                      bool noise) { 
     const unsigned int N = indices.size();
@@ -24,8 +26,10 @@ void generateSample (std::vector<double>& out, std::vector<Pulsar> &pulsars,
 
 void genCovarianceMatrix (std::vector<double> & matrix, std::vector<Pulsar> & pulsars,
                           std::vector<unsigned short> & indices, std::vector<double> & Times,
-                          const bool WhiteNoise, const bool RedNoise, const bool PowerLaw, const bool GWB) {
-    std::cout << "Generating the covariance matrix: ";
+                          const bool WhiteNoise, const bool RedNoise, const bool PowerLaw, const bool GWB, bool debug) {
+    if (debug) {
+        std::cout << "Generating the covariance matrix: "; std::cout.flush();
+    }
     unsigned int N = indices.size();
 
     // Initiate a zero matrix
@@ -85,11 +89,21 @@ void genCovarianceMatrix (std::vector<double> & matrix, std::vector<Pulsar> & pu
         }
     }
 
-    std::vector<double> matrix_old = matrix;
-    // Invert the matrix, as we do not need the other bit
-    inverseATLAS(matrix_old, matrix);
+    if (debug) {
+        std::cout << "DONE" << std::endl;
+        std::cout << "Calculating the inverse of the Covariance Matrix: "; std::cout.flush();
+    }
 
-    std::cout << "DONE" << std::endl;
+    try {
+        // Now, calculate the inverse
+        inverseATLASOverwrite(matrix);
+    } catch (const char * msg) {
+        std::cerr << msg << std::endl;
+    }
+
+    if (debug) {
+        std::cout << "DONE" << std::endl;
+    }
 }
 
 // Calculate red noise Lorentzian terms (i.e. red noise)

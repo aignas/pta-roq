@@ -32,10 +32,11 @@ void generateSample (std::vector<double> & out, std::vector<Pulsar> & pulsars,
  * @param RedNoise If true, then red noise contributions will be added.
  * @param PowerLaw If true, then power law noise contributions will be added.
  * @param GWB If true, then GWB contributions will be added.
+ * @param debug If true (by default) then will output some text information.
  */
 void genCovarianceMatrix (std::vector<double> &matrix, std::vector<Pulsar> & pulsars,
                           std::vector<unsigned short> & indices, std::vector<double> & Times,
-                          const bool WhiteNoise, const bool RedNoise, const bool PowerLaw, const bool GWB); 
+                          const bool WhiteNoise, const bool RedNoise, const bool PowerLaw, const bool GWB, bool debug = false); 
 
 /**
  * Calculate the GWB terms in the covariance matrix members.
