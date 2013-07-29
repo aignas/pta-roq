@@ -7,8 +7,8 @@ double computeLogLikelihood (std::vector<double> & data,
 /**
  * Draw from prior
  */
-void drawFromPrior(std::vector<double> parmin, 
-                   std::vector<double> parmax,
+void drawFromPrior(std::vector<double> & parmin, 
+                   std::vector<double> & parmax,
                    std::vector<double> & prop);
 
 /**
@@ -18,7 +18,7 @@ void mcmcProposal(std::vector<double> & thnow,
                   std::vector<double> & thprop,
                   std::vector<double> & parmin,
                   std::vector<double> & parmax, 
-                  bool & useGaussian = false);
+                  bool useGaussian = false);
 
 /**
  * Search the parameter space with MCMC

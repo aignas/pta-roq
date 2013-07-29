@@ -22,7 +22,7 @@
 
     // Data save and output statistics
 
-double ComputeLogLikelihood (std::vector<double> & data,
+double computeLogLikelihood (std::vector<double> & data,
                              std::vector<double> & signalTmp,
                              std::vector<double> & CovM) {
     return dotProduct(data,signalTmp) - norm(signalTmp, CovM)/2;
@@ -62,7 +62,7 @@ void mcmcProposal(std::vector<double> & parmin,
                   std::vector<double> & parmax, 
                   std::vector<double> & thnow, 
                   std::vector<double> & thprop,
-                  bool & useGaussian) {
+                  bool useGaussian) {
     if (useGaussian) {
         GaussianProposal(thnow, thprop, parmin, parmax);
     } else {
@@ -79,17 +79,20 @@ void mcmcSearch(std::vector<double> & data,
                 const bool dataSave,
                 bool & ROQ) {
     double ratio, likenew, likeold;
-    bool accept;
     // Various containers
     std::vector<double> parmin,
                         parmax,
                         thnow,
                         thprop,
                         signalTmp;
+    
+    // Initialise parameter search.
+
+    getTmp(thprop, signalTmp);
 
     std::clock_t start;
     start = std::clock();
-    computeLogLikelihood(data, signalTmp, CovM);
+    likeold = computeLogLikelihood(data, signalTmp, CovM);
     std::cout << "Likelihood is evaluated in " 
               << ( std::clock() - start ) / (double) CLOCKS_PER_SEC
               << " seconds." << std::endl;
