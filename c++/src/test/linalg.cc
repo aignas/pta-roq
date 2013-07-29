@@ -61,7 +61,7 @@ int test_projectionResidual () {
 
     // Construct the inverse of the Grammian
     constructGrammian (G_inv, set, A);
-    inverse(G_inv);
+    inverseATLASOverwrite(G_inv);
 
     // Check the projection
     projectionResidual (z, set, A, G_inv);
