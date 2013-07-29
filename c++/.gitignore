@@ -1,5 +1,6 @@
 *.so
 *.o
-data_generator
-roq_generator
-test_runner
+bin
+data
+MCMC
+data_test
