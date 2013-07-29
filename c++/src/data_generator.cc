@@ -50,27 +50,34 @@ int main(int argc, char * argv []) {
     // Declare all the data structures
     // Randomize the starting times?
     std::vector<double> t_init (pulsarNumber, 0),
-                        range = {1e20, 1e24, 0, 3.1, -3.1, 3.1},
+    // FIXME must be configurable from a file
+                        range = {1e+10, 1e+16, 0.01, 3.1, -3.1, 3.1},
                         Times, r;
     std::vector<unsigned short> indices;
     std::vector<Pulsar> pulsars;
     std::vector<std::vector<double> > sources;
 
     // Randomize the pulsar structure and generate a schedule
-    std::cout << "Generating a pulsar grid and the schedule for the measurements: "; std::cout.flush();
     pulsarGrid::randomizeData (pulsars, pulsarNumber, range, 5e-9);
     pulsarGrid::generateSchedule (t_init, t_final, dt_min, dt_max, indices, Times);
-    std::cout << "DONE" << std::endl;
 
-    // FIXME must be configurable from a file
     // Add a single source
     csv2arrayArrayDouble(argv_s[2], sources, delim);
 
     // Generate a residual vector
-    std::cout << "Generating a residual vector: "; std::cout.flush();
     try {
+        for (unsigned i = 0; i < sources.size(); i++) {
+            if (i==0) {
+                std::cout << "Generating the residuals with parameters:";
+            } else {
+                std::cout << "                                         ";
+            }
+            for (unsigned j = 0; j < sources[i].size(); j++) {
+                std::cout << " " << sources[i][j];
+            }
+            std::cout << std::endl;
+        }
         generateSample (r, pulsars, indices, Times, sources);
-        std::cout << "DONE" << std::endl;
     } catch (const std::bad_alloc&) {
         std::cerr << "Something went wrong" << std::endl;
         return 1;
@@ -79,10 +86,8 @@ int main(int argc, char * argv []) {
     // Output the data into files:
     // Output the pulsar parameters
     pulsar2csv (fnames.at(0), pulsars, delim);
-
     // Output the schedule
     arraysShortDouble2csv (fnames.at(1), indices, Times, delim);
-
     // Residuals out
     arrayDouble2csv (fnames.at(2), r, delim);
 

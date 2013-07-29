@@ -97,6 +97,8 @@ int main(int argc, char * argv []) {
             << std::endl;
     }
 
+    delim = ", ";
+
     // Set the error
     const double epsilon = helper::convertToDouble(argvs[5]);
 
@@ -112,8 +114,8 @@ int main(int argc, char * argv []) {
     std::vector<std::vector<double> > RB_params, RB;
 
     // Read pulsar and schedule data from a file
-    csv2arraysShortDouble(fnames[1], G::indices, G::Times, delim);
     csv2pulsar(fnames[0], G::pulsars, delim);
+    csv2arraysShortDouble(fnames[1], G::indices, G::Times, delim);
 
     // FIXME check if it is possible to have reduced basis for the Basis functions of
     // the signal (A^i):
@@ -121,7 +123,8 @@ int main(int argc, char * argv []) {
     G::params.resize(params_min.size());
     std::cout << "Generating the parameter space: " << std::endl;
     for (unsigned i = 0; i < G::params.size(); i++) {
-        std::cout << "\t" << i << " " << params_N[i] << " points in range [" << params_min[i] << "; " << params_max[i] << "]." << std::endl;
+        std::cout << "\t" << i+1 << " " << params_N[i] << " points in range [" 
+                  << params_min[i] << "; " << params_max[i] << "]." << std::endl;
         linspace(G::params[i], params_min[i], params_max[i], params_N[i]);
     }
 
@@ -137,21 +140,16 @@ int main(int argc, char * argv []) {
 
     // Protected code
     try {
-        std::clock_t start;
-        double duration;
-        start = std::clock();
-        genCovarianceMatrix (C_inv, G::pulsars, G::indices, G::Times, true, false, false, false);
-        duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-        std::cout << duration << std::endl;
-        greedyReducedBasis (totalNumber, getData, C_inv, epsilon, RB_params, RB, Grammian, templateNorms, sigma, false);
-        duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-        std::cout << duration << std::endl;
+        std::clock_t start = std::clock();
+
+        genCovarianceMatrix (C_inv, G::pulsars, G::indices, G::Times, true, false, false, false, true);
+        std::cout << "The job was done in " << ( std::clock() - start ) / (double) CLOCKS_PER_SEC << " s of CPU Time" << std::endl;
+        greedyReducedBasis (totalNumber, getData, C_inv, epsilon, RB_params, RB, Grammian, templateNorms, sigma, true);
+        std::cout << "The job was done in " << ( std::clock() - start ) / (double) CLOCKS_PER_SEC << " s of CPU Time" << std::endl;
         greedyEIMpoints (RB_params, RB, EIM_indices, EIM_points, interpolationMatrix);
-        duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-        std::cout << duration << std::endl;
+        std::cout << "The job was done in " << ( std::clock() - start ) / (double) CLOCKS_PER_SEC << " s of CPU Time" << std::endl;
         constructROQ (data, data_tilda, EIM_indices, Grammian, interpolationMatrix);
-        duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-        std::cout << duration << std::endl;
+        std::cout << "The job was done in " << ( std::clock() - start ) / (double) CLOCKS_PER_SEC << " s of CPU Time" << std::endl;
 
         // Output the basis params and error to a file
         arrayArrayDouble2csv (fnames[3], RB_params, delim);
