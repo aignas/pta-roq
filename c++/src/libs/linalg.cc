@@ -110,7 +110,7 @@ void projectionResidual (dvec & projectee, std::vector<dvec> & set,
             c_i += G_inv[j + i*N] * innerProduct(projectee, A, set[j]);
         }
 
-        axpyProduct(- c_i, set[i], projectee);
+        axpyProduct(- c_i, set[i], 1, projectee);
     }
 
 }
@@ -127,7 +127,7 @@ void projectionResidualOptimized (dvec & projectee, std::vector<dvec> & set,
             c_i += G_inv[j + i*N] * dotProduct(projectee, set_hat[j]);
         }
 
-        axpyProduct(- c_i, set[i], projectee);
+        axpyProduct(- c_i, set[i], 1, projectee);
     }
 
 }
@@ -184,6 +184,7 @@ void linspace (std::vector<double> & array_out, double min, double max, const un
     }
 }
 
+/*
 int inverse (std::vector<double> & A) {
     int N = sqrt(A.size());
 
@@ -202,6 +203,7 @@ int inverse (std::vector<double> & A) {
 
     return INFO;
 }
+ */
 
 int inverseATLASOverwrite (std::vector<double> & A) {
     int N = sqrt(A.size()), info1, info2;
@@ -226,6 +228,7 @@ int inverseATLAS (std::vector<double> & A, std::vector<double> & A_out) {
         return inverseATLASOverwrite (A_out);
     } catch (const char* msg) {
         std::cerr << msg << std::endl;
+        return 1;
     }
 }
 
